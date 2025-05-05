@@ -1,0 +1,147 @@
+{
+  "name": "adamize",
+  "displayName": "Adamize",
+  "description": "AI-assisted development with a focus on test-driven development and DevOps best practices",
+  "version": "0.0.1",
+  "publisher": "adamize",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Adamize",
+      "properties": {
+        "adamize.mcp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP client"
+        },
+        "adamize.mcp.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "MCP server URL"
+        },
+        "adamize.contextEngine": {
+          "type": "object",
+          "description": "Context engine settings",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable the context engine"
+            },
+            "tokenLimit": {
+              "type": "number",
+              "default": 4000,
+              "description": "Maximum number of tokens in the context"
+            },
+            "maxChunks": {
+              "type": "number",
+              "default": 10,
+              "description": "Maximum number of chunks to include in the context"
+            }
+          }
+        },
+        "adamize.fileWatcher": {
+          "type": "object",
+          "description": "File watcher settings",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable the file watcher"
+            },
+            "patterns": {
+              "type": "array",
+              "default": [
+                "**/*.{js,ts,jsx,tsx,py,java,c,cpp,h,hpp,cs,go,rb,php,rs,swift,kt,html,css,scss,sass,json,yaml,yml,xml,md}"
+              ],
+              "description": "File patterns to watch"
+            },
+            "ignored": {
+              "type": "array",
+              "default": [
+                "**/node_modules/**",
+                "**/.git/**",
+                "**/dist/**",
+                "**/build/**",
+                "**/.vscode/**",
+                "**/out/**"
+              ],
+              "description": "File patterns to ignore"
+            }
+          }
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "adamize.showWelcome",
+        "title": "Show Welcome",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.connectMCP",
+        "title": "Connect to MCP Server",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.listMCPTools",
+        "title": "List MCP Tools",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.runTests",
+        "title": "Run Tests",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.runTestsWithCoverage",
+        "title": "Run Tests with Coverage",
+        "category": "Adamize"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "test:coverage": "jest --coverage",
+    "format": "prettier --write src/**/*.ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "18.x",
+    "@types/sinon": "^17.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.40.0",
+    "eslint-config-prettier": "^9.0.0",
+    "glob": "^10.0.0",
+    "jest": "^29.7.0",
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.0",
+    "sinon": "^17.0.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chokidar": "^3.5.3"
+  }
+}

@@ -1,0 +1,66 @@
+# Adamize Project Guidelines
+
+## Project Overview
+Adamize is a VS Code extension project focused on creating a development assistant similar to Augment Code but with specific differences and improvements. The project follows a test-driven development approach with a strong emphasis on DevOps best practices.
+
+## Development Workflow
+This project follows a strict test-driven development workflow:
+
+1. Define requirements and acceptance criteria
+2. Write tests that validate the requirements
+3. Implement code to pass the tests
+4. Refactor while maintaining test coverage
+5. Document the implementation
+
+## Code Standards
+- TypeScript for all code
+- ESLint for code linting
+- Prettier for code formatting
+- Jest for testing
+- 100% test coverage for core functionality
+- Documentation for all public APIs
+
+## Git Workflow
+- Feature branches for all changes
+- Pull requests for code review
+- CI/CD pipeline must pass before merging
+- Semantic versioning for releases
+- Conventional commits for commit messages
+
+## MCP Client Implementation
+The first feature to be implemented is an MCP (Model Context Protocol) client that will:
+- Connect to MCP servers
+- Discover available tools
+- Call functions on tools
+- Handle responses and errors
+
+## Project Structure
+- `src/` - Source code
+  - `extension.ts` - Extension entry point
+  - `mcp/` - MCP client implementation
+  - `test/` - Test code
+- `docs/` - Documentation
+- `.devcontainer/` - Development container configuration
+- `.github/` - GitHub workflows and templates
+
+## Development Environment
+The project uses a dedicated DevContainer for development to ensure consistency and isolation from the host system. The DevContainer includes:
+- Node.js and npm
+- TypeScript and ESLint
+- VS Code extension development tools
+- Docker for testing with containers
+- Git for version control
+
+## Testing Strategy
+- Unit tests for all components
+- Integration tests for the extension
+- End-to-end tests for user workflows
+- Coverage reports for all tests
+- Automated testing in CI/CD pipeline
+
+## Documentation Requirements
+- README.md with project overview and setup instructions
+- CONTRIBUTING.md with contribution guidelines
+- API documentation for all public interfaces
+- User documentation for the extension
+- Development guides for contributors

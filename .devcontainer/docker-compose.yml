@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Main development container
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    volumes:
+      # Mount the root folder that contains .devcontainer folder
+      - ..:/workspace:cached
+
+      # Mount Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+
+      # Mount reference volumes from augment-adam (if needed)
+      - ../augment-adam:/workspace/reference/augment-adam:ro
+
+      # Cache volumes for faster builds and package installations
+      - node-modules:/workspace/node_modules:cached
+      - npm-cache:/home/node/.npm:cached
+      - vscode-server:/home/node/.vscode-server:cached
+
+      # Mount Git config
+      - ~/.gitconfig:/home/node/.gitconfig:ro
+
+    # Overrides default command so things don't shut down after the process ends
+    command: sleep infinity
+
+    # Forward ports for services
+    ports:
+      - "3000:3000" # Web server (if needed)
+      - "9229:9229" # Node.js debugging
+
+    # Set environment variables
+    environment:
+      - NODE_ENV=development
+      - CHROMA_HOST=http://chroma:8000
+
+    # Use the "remoteUser" property in devcontainer.json to specify a non-root user
+    user: node
+
+    depends_on:
+      - chroma
+
+  # ChromaDB for vector storage
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma-data:/chroma/chroma
+    # Only expose to internal network, not to host
+    expose:
+      - "8000"
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+
+volumes:
+  # Define named volumes
+  node-modules:
+  npm-cache:
+  vscode-server:
+  chroma-data:
