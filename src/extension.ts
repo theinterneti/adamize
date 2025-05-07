@@ -189,7 +189,7 @@ export function deactivate() {
  * Show welcome message on first activation
  * @param context Extension context
  */
-function showWelcomeMessage(context: vscode.ExtensionContext) {
+export function showWelcomeMessage(context: vscode.ExtensionContext) {
   const hasShownWelcome = context.globalState.get('adamize.hasShownWelcome');
   if (!hasShownWelcome) {
     vscode.window.showInformationMessage('Welcome to Adamize! Get started by connecting to an MCP server.');

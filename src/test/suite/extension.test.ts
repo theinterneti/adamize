@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as sinon from 'sinon';
 
 suite('Extension Test Suite', () => {
   vscode.window.showInformationMessage('Starting extension tests');
@@ -20,5 +21,70 @@ suite('Extension Test Suite', () => {
     assert.ok(commands.includes('adamize.listMCPTools'));
     assert.ok(commands.includes('adamize.runTests'));
     assert.ok(commands.includes('adamize.runTestsWithCoverage'));
+  });
+
+  test('showWelcomeMessage should show message on first activation', () => {
+    // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const extension = require('../../extension');
+
+    // Create stubs
+    const showInfoStub = sinon.stub(vscode.window, 'showInformationMessage');
+    const globalStateStub = {
+      get: sinon.stub().returns(undefined),
+      update: sinon.stub().resolves()
+    };
+    const context = { globalState: globalStateStub };
+
+    // Call the function
+    extension.showWelcomeMessage(context);
+
+    // Assert
+    assert.strictEqual(showInfoStub.calledWith('Welcome to Adamize! Get started by connecting to an MCP server.'), true);
+    assert.strictEqual(globalStateStub.update.calledWith('adamize.hasShownWelcome', true), true);
+
+    // Restore stubs
+    sinon.restore();
+  });
+
+  test('showWelcomeMessage should not show message on subsequent activations', () => {
+    // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const extension = require('../../extension');
+
+    // Create stubs
+    const showInfoStub = sinon.stub(vscode.window, 'showInformationMessage');
+    const globalStateStub = {
+      get: sinon.stub().returns(true),
+      update: sinon.stub().resolves()
+    };
+    const context = { globalState: globalStateStub };
+
+    // Call the function
+    extension.showWelcomeMessage(context);
+
+    // Assert
+    assert.strictEqual(showInfoStub.called, false);
+
+    // Restore stubs
+    sinon.restore();
+  });
+
+  test('deactivate should log deactivation message', () => {
+    // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const extension = require('../../extension');
+
+    // Create stub
+    const consoleInfoStub = sinon.stub(console, 'info');
+
+    // Call the function
+    extension.deactivate();
+
+    // Assert
+    assert.strictEqual(consoleInfoStub.calledWith('Deactivating Adamize extension'), true);
+
+    // Restore stub
+    sinon.restore();
   });
 });
