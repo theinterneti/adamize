@@ -1,16 +1,91 @@
-out
-node_modules
-.vscode-test/
+# Node.js & Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+
+# TypeScript build artifacts
+*.tsbuildinfo
+*.js.map
+
+# Build output
+# Primary output directory as per tsconfig.json and .augment-guidelines
+out/
+# Common alternative build output directory, also in eslint ignorePatterns
+dist/
+lib/
+
+# VS Code Extension specific
+# Packaged extension file
 *.vsix
+# VS Code test runner download/cache directory
+.vscode-test/
+.vscode-test-web/
+# VS Code settings that should not be shared
+.vscode/settings.json
+.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Test coverage
+coverage/
+.nyc_output/
+lcov.info
+*.lcov
+
+# OS generated files
 .DS_Store
-coverage
-.nyc_output
-dist
-.idea
+Thumbs.db
+.directory
+desktop.ini
+
+# Log files
 *.log
+logs/
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Editor/IDE specific (user settings, not project config)
+# For JetBrains IDE users
+.idea/
+*.sublime-*
+*.code-workspace
 .history
+
+# ESLint cache
+.eslintcache
+
+# Environment variables
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Debug files
+.node_repl_history
+.node_history
+
+# Docker artifacts
+.dockerignore
+docker-compose.override.yml
+
+# Local development files
+local/
+
+# Project-specific ignores
+runtipi/
+tipi/
+ollama-mcp-bridge/
