@@ -83,8 +83,21 @@ describe('LLM Client', () => {
                     content: 'Test response'
                 },
                 done: true
-            })
-        });
+            }),
+            headers: new Headers(),
+            status: 200,
+            statusText: 'OK',
+            type: 'basic',
+            url: 'http://localhost:11434/v1/chat/completions',
+            redirected: false,
+            body: null,
+            bodyUsed: false,
+            clone: () => ({} as Response),
+            arrayBuffer: async () => new ArrayBuffer(0),
+            blob: async () => new Blob(),
+            formData: async () => new FormData(),
+            text: async () => '',
+        } as Response);
     });
 
     afterEach(() => {
@@ -106,8 +119,21 @@ describe('LLM Client', () => {
                     content: 'Test response'
                 },
                 done: true
-            })
-        });
+            }),
+            headers: new Headers(),
+            status: 200,
+            statusText: 'OK',
+            type: 'basic',
+            url: 'http://localhost:11434/v1/chat/completions',
+            redirected: false,
+            body: null,
+            bodyUsed: false,
+            clone: () => ({} as Response),
+            arrayBuffer: async () => new ArrayBuffer(0),
+            blob: async () => new Blob(),
+            formData: async () => new FormData(),
+            text: async () => '',
+        } as Response);
 
         // Send a prompt
         const response = await client.sendPrompt('Hello, world!');
@@ -132,8 +158,21 @@ describe('LLM Client', () => {
                     content: 'Test response'
                 },
                 done: true
-            })
-        });
+            }),
+            headers: new Headers(),
+            status: 200,
+            statusText: 'OK',
+            type: 'basic',
+            url: 'http://localhost:11434/v1/chat/completions',
+            redirected: false,
+            body: null,
+            bodyUsed: false,
+            clone: () => ({} as Response),
+            arrayBuffer: async () => new ArrayBuffer(0),
+            blob: async () => new Blob(),
+            formData: async () => new FormData(),
+            text: async () => '',
+        } as Response);
 
         // Send a prompt
         await client.sendPrompt('Hello, world!');
@@ -194,8 +233,21 @@ describe('LLM Client', () => {
                     content: 'Response from Hugging Face'
                 },
                 done: true
-            })
-        });
+            }),
+            headers: new Headers(),
+            status: 200,
+            statusText: 'OK',
+            type: 'basic',
+            url: 'http://localhost:8080/v1/chat/completions',
+            redirected: false,
+            body: null,
+            bodyUsed: false,
+            clone: () => ({} as Response),
+            arrayBuffer: async () => new ArrayBuffer(0),
+            blob: async () => new Blob(),
+            formData: async () => new FormData(),
+            text: async () => '',
+        } as Response);
 
         // Send a prompt
         await huggingFaceClient.sendPrompt('Hello from Hugging Face');

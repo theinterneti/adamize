@@ -1,13 +1,12 @@
 /**
  * LLM Client
- * 
+ *
  * Client for interacting with Large Language Models through the MCP protocol.
  * @implements REQ-MCP-010
  */
 
 import * as vscode from 'vscode';
 import { MCPToolRegistry } from './mcpToolRegistry';
-import { MCPTool } from './mcpTypes';
 
 /**
  * LLM Client options
@@ -15,19 +14,19 @@ import { MCPTool } from './mcpTypes';
 export interface LLMClientOptions {
   /** Model name */
   model: string;
-  
+
   /** API endpoint */
   endpoint: string;
-  
+
   /** API key */
   apiKey?: string;
-  
+
   /** System prompt */
   systemPrompt?: string;
-  
+
   /** Temperature */
   temperature?: number;
-  
+
   /** Max tokens */
   maxTokens?: number;
 }
@@ -39,7 +38,7 @@ export class LLMClient {
   private options: LLMClientOptions;
   private toolRegistry: MCPToolRegistry;
   private outputChannel: vscode.OutputChannel;
-  
+
   /**
    * Create a new LLM client
    * @param options Client options
@@ -55,7 +54,7 @@ export class LLMClient {
     this.toolRegistry = toolRegistry;
     this.outputChannel = outputChannel;
   }
-  
+
   /**
    * Send a prompt to the LLM
    * @param prompt User prompt
@@ -65,7 +64,7 @@ export class LLMClient {
     try {
       const formattedPrompt = this.formatPrompt(prompt);
       this.log(`Sending prompt to ${this.options.endpoint}`);
-      
+
       const response = await fetch(this.options.endpoint, {
         method: 'POST',
         headers: {
@@ -82,19 +81,25 @@ export class LLMClient {
           max_tokens: this.options.maxTokens || 1000
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      return data.message.content;
+      // Type assertion for the response data
+      const typedData = data as {
+        message: {
+          content: string
+        }
+      };
+      return typedData.message.content;
     } catch (error) {
       this.log(`Error sending prompt: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
-  
+
   /**
    * Format the prompt with available tools
    * @param prompt User prompt
@@ -102,14 +107,14 @@ export class LLMClient {
    */
   private formatPrompt(prompt: string): string {
     const toolInstructions = this.toolRegistry.getToolInstructions();
-    
+
     if (!toolInstructions) {
       return prompt;
     }
-    
+
     return `${prompt}\n\n${toolInstructions}`;
   }
-  
+
   /**
    * Log a message to the output channel
    * @param message Message to log

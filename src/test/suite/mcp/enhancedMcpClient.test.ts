@@ -26,7 +26,7 @@ import * as vscode from 'vscode';
 import axios from 'axios';
 import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpClient';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
+// Import the types we need
 // We don't directly use childProcess but we need to reference it in comments
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as _childProcess from 'child_process';
@@ -37,7 +37,7 @@ suite('Enhanced MCP Client Test Suite', () => {
   let axiosGetStub: sinon.SinonStub;
   let axiosPostStub: sinon.SinonStub;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let execStub: sinon.SinonStub;
+  // We'll define execStub later if needed
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   let client: EnhancedMCPClient;
   let networkConfigStub: sinon.SinonStubbedInstance<typeof networkConfig>;
@@ -56,7 +56,7 @@ suite('Enhanced MCP Client Test Suite', () => {
       appendLine: sinon.stub(),
       append: sinon.stub(),
       clear: sinon.stub(),
-      show: sinon.stub(),
+      show: sinon.stub() as unknown as sinon.SinonStub & ((preserveFocus?: boolean) => void),
       hide: sinon.stub(),
       dispose: sinon.stub()
     };
@@ -69,7 +69,8 @@ suite('Enhanced MCP Client Test Suite', () => {
     // Stub networkConfig
     networkConfigStub = sinon.stub(networkConfig);
     networkConfigStub.getServiceUrl.returns('http://localhost:8000');
-    networkConfigStub.getCurrentEnvironment.returns('development');
+    // Use the correct enum value for environment
+    networkConfigStub.getCurrentEnvironment.returns('dev' as any);
 
     // Create client instance
     client = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.HTTP);

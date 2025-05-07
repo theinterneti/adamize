@@ -13,7 +13,8 @@ suite('Network Configuration Test Suite', () => {
   // Stubs
   let processEnvStub: sinon.SinonStub;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let vsCodeConfigStub: sinon.SinonStub;
+  // We'll define vsCodeConfigStub when needed
+  // let vsCodeConfigStub: sinon.SinonStub;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockConfig: any;
 
@@ -21,7 +22,8 @@ suite('Network Configuration Test Suite', () => {
   setup(() => {
     // Save original process.env
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const originalEnv = process.env;
+    // Save original env for reference
+    // const originalEnv = process.env;
 
     // Stub process.env
     processEnvStub = sinon.stub(process, 'env').value({});

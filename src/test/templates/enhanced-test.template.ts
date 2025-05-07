@@ -33,29 +33,29 @@ suite('Your Test Suite Name', () => {
   // Declare stubs and mocks at the suite level
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   // let yourClassStub: sinon.SinonStubbedInstance<YourClass>;
-  
+
   // Test setup - runs before each test
   setup(() => {
     // Initialize test dependencies
     // Create stubs, mocks, etc.
-    
+
     // Example of creating a VS Code OutputChannel stub
     outputChannelStub = {
       appendLine: sinon.stub(),
       append: sinon.stub(),
       clear: sinon.stub(),
-      show: sinon.stub(),
+      show: sinon.stub() as unknown as sinon.SinonStub & ((preserveFocus?: boolean) => void),
       hide: sinon.stub(),
       dispose: sinon.stub(),
       name: 'Test Channel',
       // Add any other methods you need to stub
     };
-    
+
     // Stub VS Code window.createOutputChannel
     // Using 'as any' is necessary here due to the complex VS Code API types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sinon.stub(vscode.window, 'createOutputChannel').returns(outputChannelStub as any);
-    
+
     // Example of stubbing a class
     // yourClassStub = sinon.createStubInstance(YourClass);
   });
@@ -80,7 +80,7 @@ suite('Your Test Suite Name', () => {
 
     // Assert - verify the expected outcome
     assert.strictEqual(result, expectedValue);
-    
+
     // If testing logging, verify the log was called
     // assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
@@ -117,12 +117,13 @@ suite('Your Test Suite Name', () => {
     assert.strictEqual(result, mockValue);
     // assert.strictEqual(stub.calledOnce, true);
   });
-  
+
   // Error handling test case
   // TEST-XXX-YYY: Description of what this test is verifying
   test('should handle errors gracefully', () => {
     // Arrange
-    const errorMessage = 'Test error';
+    // Define error message when needed
+    // const errorMessage = 'Test error';
     // const dependency = { method: () => { throw new Error(errorMessage); } };
     // const instance = new YourClass(dependency);
 
@@ -130,33 +131,32 @@ suite('Your Test Suite Name', () => {
     // assert.throws(() => {
     //   instance.methodThatShouldHandleErrors();
     // }, /Test error/);
-    
+
     // Or for async methods that should handle errors:
     // await assert.doesNotReject(async () => {
     //   await instance.asyncMethodThatShouldHandleErrors();
     // });
-    
+
     // Then verify error was logged
     // assert.strictEqual(outputChannelStub.appendLine.called, true);
     // assert.ok(outputChannelStub.appendLine.calledWith(sinon.match(/Test error/)));
   });
-  
+
   // Skip tests that can't be run in CI environment
   // but document why they're skipped
   test.skip('should test functionality that requires Docker', () => {
     // This test is skipped because it requires Docker, which is not available in CI
     // When running locally, you can unskip this test if Docker is available
   });
-  
+
   // Conditionally skip tests based on environment
   // TEST-XXX-YYY: Description of what this test is verifying
   test('should conditionally skip tests', function() {
     // Skip test if running in CI environment
     if (process.env.CI === 'true') {
-      this.skip();
-      return;
+      return this.skip();
     }
-    
+
     // Test implementation
     assert.ok(true);
   });

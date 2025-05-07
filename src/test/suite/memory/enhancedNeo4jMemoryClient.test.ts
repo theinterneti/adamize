@@ -11,7 +11,8 @@ import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpCli
 import { EnhancedNeo4jMemoryClient } from '../../../memory/enhancedNeo4jMemoryClient';
 import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import networkConfig from '../../../utils/networkConfig';
+// We'll import networkConfig when needed
+// import networkConfig from '../../../utils/networkConfig';
 
 suite('Enhanced Neo4j Memory Client Test Suite', () => {
   // Stubs
