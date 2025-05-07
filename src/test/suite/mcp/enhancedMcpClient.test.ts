@@ -70,7 +70,9 @@ suite('Enhanced MCP Client Test Suite', () => {
       appendLine: sinon.stub(),
       append: sinon.stub(),
       clear: sinon.stub(),
-      show: sinon.stub(),
+      replace: sinon.stub(),
+      // Use type assertion to make TypeScript happy
+      show: sinon.stub() as unknown as typeof outputChannelStub.show,
       hide: sinon.stub(),
       dispose: sinon.stub(),
       name: 'Test Channel'

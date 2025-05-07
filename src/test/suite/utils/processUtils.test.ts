@@ -11,16 +11,16 @@ suite('Process Utilities Test Suite', () => {
   // Stubs
   let execStub: sinon.SinonStub;
   let spawnStub: sinon.SinonStub;
-  let mockProcess: EventEmitter;
+  // Use any type for mockProcess to avoid TypeScript errors
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockProcess: any;
 
   // Setup before each test
   setup(() => {
-    // Create mock process
-    mockProcess = new EventEmitter();
-    // Add stdout and stderr streams as any type
+    // Create mock process with necessary properties
+    mockProcess = new EventEmitter() as any;
     mockProcess.stdout = new EventEmitter() as any;
     mockProcess.stderr = new EventEmitter() as any;
-    // Add methods
     mockProcess.kill = sinon.stub();
 
     // Stub child_process methods
