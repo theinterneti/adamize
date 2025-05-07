@@ -127,7 +127,7 @@ export class MCPClient {
   public async callFunction(
     toolName: string,
     functionName: string,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
     try {
       this.outputChannel.appendLine(`Calling function ${functionName} on tool ${toolName}`);
@@ -185,7 +185,7 @@ export class MCPClient {
    * @implements REQ-MCP-011, REQ-MCP-023, REQ-MCP-033
    */
   private _validateParameters(
-    parameters: Record<string, any>,
+    parameters: Record<string, unknown>,
     functionSchema: IMCPFunctionSchema
   ): void {
     try {

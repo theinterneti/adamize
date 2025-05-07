@@ -18,6 +18,7 @@ export function run(): Promise<void> {
       .then((files: string[]) => {
         // Add files to the test suite
         files.forEach((f: string) => {
+          // eslint-disable-next-line no-console
           console.log(`Adding test file: ${f}`);
           mocha.addFile(path.resolve(testsRoot, f));
         });
@@ -32,11 +33,13 @@ export function run(): Promise<void> {
             }
           });
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.error(err);
           e(err);
         }
       })
       .catch((err: unknown) => {
+        // eslint-disable-next-line no-console
         console.error(err);
         e(err);
       });

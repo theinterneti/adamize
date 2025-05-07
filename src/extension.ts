@@ -1,14 +1,14 @@
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/mcpClient';
-import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
+// import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
 import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
-let enhancedMcpClient: EnhancedMCPClient | undefined;
+// let _enhancedMcpClient: EnhancedMCPClient | undefined;
 let memoryClient: Neo4jMemoryClient | undefined;
 let enhancedMemoryClient: EnhancedNeo4jMemoryClient | undefined;
 
@@ -47,8 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
         // In other environments, use the standard clients
         console.info('Using standard clients');
 
-        // Get MCP server URL from settings or environment variable
-        const config = vscode.workspace.getConfiguration('adamize.mcp');
+        // Get MCP server URL from environment variable or settings
         const serverUrl = networkConfig.getServiceUrl(ServiceType.MCPNeo4jMemory);
 
         console.info(`Connecting to MCP server at ${serverUrl}`);

@@ -14,7 +14,7 @@ import { IMCPFunctionSchema, IMCPParameterSchema, MCPError, MCPErrorCode } from 
  * @implements REQ-MCP-011, REQ-MCP-023
  */
 export function validateParameters(
-  parameters: Record<string, any>,
+  parameters: Record<string, unknown>,
   functionSchema: IMCPFunctionSchema
 ): void {
   // Check for required parameters
@@ -59,7 +59,7 @@ export function validateParameters(
  */
 function validateParameterType(
   paramName: string,
-  paramValue: any,
+  paramValue: unknown,
   paramSchema: IMCPParameterSchema
 ): void {
   // Handle null/undefined
@@ -120,7 +120,7 @@ function validateParameterType(
  * @implements REQ-MCP-032, REQ-MCP-033
  */
 export function formatParameters(
-  parameters: Record<string, any>,
+  parameters: Record<string, unknown>,
   maxLength: number = 100
 ): string {
   return JSON.stringify(parameters, (_key, value) => {
@@ -138,7 +138,7 @@ export function formatParameters(
  * @returns Formatted error string
  * @implements REQ-MCP-033
  */
-export function formatError(error: any): string {
+export function formatError(error: unknown): string {
   if (error instanceof MCPError) {
     return `MCPError [${error.code}]: ${error.message}${
       error.details ? ` - Details: ${JSON.stringify(error.details)}` : ''

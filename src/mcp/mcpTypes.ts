@@ -58,7 +58,7 @@ export interface IMCPParameterSchema {
   required: boolean;
 
   /** Default value for the parameter */
-  defaultValue?: any;
+  defaultValue?: unknown;
 }
 
 /**
@@ -70,7 +70,7 @@ export interface IMCPFunctionCallResult {
   status: 'success' | 'error';
 
   /** Result data (if status is success) */
-  result?: any;
+  result?: unknown;
 
   /** Error message (if status is error) */
   error?: string;
@@ -88,7 +88,7 @@ export interface IMCPToolInvocation {
   function: string;
 
   /** Function parameters */
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
 }
 
 /**
@@ -130,7 +130,7 @@ export class MCPError extends Error {
   code: string;
 
   /** Error details */
-  details?: any;
+  details?: unknown;
 
   /**
    * Create a new MCP error
@@ -138,7 +138,7 @@ export class MCPError extends Error {
    * @param code Error code
    * @param details Error details
    */
-  constructor(message: string, code: string, details?: any) {
+  constructor(message: string, code: string, details?: unknown) {
     super(message);
     this.name = 'MCPError';
     this.code = code;

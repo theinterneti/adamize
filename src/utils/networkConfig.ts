@@ -5,7 +5,8 @@
  */
 
 import * as vscode from 'vscode';
-import * as os from 'os';
+// Commented out unused imports
+// import * as os from 'os';
 
 // Environment types
 export enum Environment {
@@ -34,10 +35,14 @@ export function getCurrentEnvironment(): Environment {
 
   // Log environment variables if debug is enabled
   if (process.env.DEBUG) {
+    // Using VS Code output channel would be better in a real implementation
+    // These console logs are for development debugging only
+    /* eslint-disable no-console */
     console.log('Environment variables:');
     console.log(`ADAMIZE_ENV: ${envVar}`);
     console.log(`NODE_ENV: ${nodeEnv}`);
     console.log(`NODE_ENV_DEV: ${nodeEnvDev}`);
+    /* eslint-enable no-console */
   }
 
   // Check for development environment
@@ -80,14 +85,20 @@ export function getServiceUrl(serviceType: ServiceType): string {
   // Debug logging
   const debug = process.env.DEBUG || process.env.AUGMENT_DEBUG;
   if (debug) {
+    /* eslint-disable no-console */
     console.log(`Getting service URL for ${serviceType} in ${env} environment`);
+    /* eslint-enable no-console */
   }
 
   // Check for service-specific override in settings
   const serviceConfig = config.get<Record<string, string>>('services');
   if (serviceConfig && serviceConfig[serviceType]) {
     const url = serviceConfig[serviceType];
-    if (debug) console.log(`Using service URL from settings: ${url}`);
+    if (debug) {
+      /* eslint-disable no-console */
+      console.log(`Using service URL from settings: ${url}`);
+      /* eslint-enable no-console */
+    }
     return url;
   }
 
@@ -97,14 +108,22 @@ export function getServiceUrl(serviceType: ServiceType): string {
     case ServiceType.Augment:
       envUrl = process.env.AUGMENT_HOST;
       if (envUrl) {
-        if (debug) console.log(`Using Augment URL from environment: ${envUrl}`);
+        if (debug) {
+          /* eslint-disable no-console */
+          console.log(`Using Augment URL from environment: ${envUrl}`);
+          /* eslint-enable no-console */
+        }
         return envUrl;
       }
       break;
     case ServiceType.ChromaDB:
       envUrl = process.env.CHROMA_HOST;
       if (envUrl) {
-        if (debug) console.log(`Using ChromaDB URL from environment: ${envUrl}`);
+        if (debug) {
+          /* eslint-disable no-console */
+          console.log(`Using ChromaDB URL from environment: ${envUrl}`);
+          /* eslint-enable no-console */
+        }
         return envUrl;
       }
       break;
@@ -112,14 +131,22 @@ export function getServiceUrl(serviceType: ServiceType): string {
       // For MCP containers, we return the container name, not a URL
       envUrl = process.env.MCP_MEMORY_CONTAINER;
       if (envUrl) {
-        if (debug) console.log(`Using MCP Memory container from environment: ${envUrl}`);
+        if (debug) {
+          /* eslint-disable no-console */
+          console.log(`Using MCP Memory container from environment: ${envUrl}`);
+          /* eslint-enable no-console */
+        }
         return envUrl;
       }
       break;
     case ServiceType.MCPNeo4jMemory:
       envUrl = process.env.MCP_NEO4J_MEMORY_CONTAINER;
       if (envUrl) {
-        if (debug) console.log(`Using MCP Neo4j Memory container from environment: ${envUrl}`);
+        if (debug) {
+          /* eslint-disable no-console */
+          console.log(`Using MCP Neo4j Memory container from environment: ${envUrl}`);
+          /* eslint-enable no-console */
+        }
         return envUrl;
       }
       break;
@@ -141,7 +168,11 @@ export function getServiceUrl(serviceType: ServiceType): string {
       url = getDevServiceUrl(serviceType);
   }
 
-  if (debug) console.log(`Using default URL for ${env} environment: ${url}`);
+  if (debug) {
+    /* eslint-disable no-console */
+    console.log(`Using default URL for ${env} environment: ${url}`);
+    /* eslint-enable no-console */
+  }
   return url;
 }
 
@@ -215,7 +246,8 @@ function getProdServiceUrl(serviceType: ServiceType): string {
  */
 export async function isServiceAvailable(serviceType: ServiceType): Promise<boolean> {
   try {
-    const url = getServiceUrl(serviceType);
+    // Commented out unused variable
+    // const _url = getServiceUrl(serviceType);
 
     // For MCP containers, check if the container is running
     if (serviceType === ServiceType.MCPMemory || serviceType === ServiceType.MCPNeo4jMemory) {
@@ -236,7 +268,7 @@ export async function isServiceAvailable(serviceType: ServiceType): Promise<bool
  * @param containerName The name of the container
  * @returns The container ID
  */
-export async function getMcpContainerId(containerName: string): Promise<string> {
+export async function getMcpContainerId(_containerName: string): Promise<string> {
   // This would need to be implemented with Docker API or exec
   return ''; // Placeholder
 }

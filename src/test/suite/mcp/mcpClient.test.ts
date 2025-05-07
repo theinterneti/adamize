@@ -9,7 +9,8 @@ import * as sinon from 'sinon';
 import axios from 'axios';
 import * as vscode from 'vscode';
 import { MCPClient } from '../../../mcp/mcpClient';
-import { IMCPFunctionCallResult, IMCPFunctionSchema, IMCPToolSchema } from '../../../mcp/mcpTypes';
+// Commented out unused imports
+// import { IMCPFunctionCallResult, IMCPFunctionSchema, IMCPToolSchema } from '../../../mcp/mcpTypes';
 
 suite('MCP Client Test Suite', () => {
   // Stubs
@@ -33,10 +34,12 @@ suite('MCP Client Test Suite', () => {
       show: sinon.stub(),
       hide: sinon.stub(),
       dispose: sinon.stub(),
-      replace: sinon.stub(),
-    };
+      replace: sinon.stub()
+    } as sinon.SinonStubbedInstance<vscode.OutputChannel>;
 
     // Stub VS Code window.createOutputChannel
+    // Using 'as any' is necessary here due to the complex VS Code API types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sinon.stub(vscode.window, 'createOutputChannel').returns(outputChannelStub as any);
 
     // Create client instance

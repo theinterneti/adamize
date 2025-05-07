@@ -4,6 +4,9 @@
  * This file is run before each test file to set up the test environment.
  */
 
+// Import Jest types
+import '../types/jest.d';
+
 // Mock VS Code API
 jest.mock('vscode', () => require('./mocks/vscode'), { virtual: true });
 
@@ -16,9 +19,19 @@ beforeEach(() => {
 });
 
 // Define Mocha test functions for Jest
-(global as any).suite = describe;
-(global as any).test = it;
-(global as any).suiteSetup = beforeEach;
-(global as any).suiteTeardown = afterEach;
-(global as any).setup = beforeEach;
-(global as any).teardown = afterEach;
+interface IGlobal {
+  suite: typeof describe;
+  test: typeof it;
+  suiteSetup: typeof beforeEach;
+  suiteTeardown: typeof afterEach;
+  setup: typeof beforeEach;
+  teardown: typeof afterEach;
+}
+
+// Add Mocha-style functions to global scope
+(global as unknown as IGlobal).suite = describe;
+(global as unknown as IGlobal).test = it;
+(global as unknown as IGlobal).suiteSetup = beforeEach;
+(global as unknown as IGlobal).suiteTeardown = afterEach;
+(global as unknown as IGlobal).setup = beforeEach;
+(global as unknown as IGlobal).teardown = afterEach;

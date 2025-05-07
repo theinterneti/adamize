@@ -9,8 +9,9 @@ import axios from 'axios';
 import { exec } from 'child_process';
 import * as vscode from 'vscode';
 import { promisify } from 'util';
-import { IMCPFunctionCallResult, IMCPFunctionSchema, IMCPToolSchema } from './mcpTypes';
-import { validateParameters, formatParameters } from './mcpUtils';
+import { IMCPFunctionCallResult } from './mcpTypes';
+// Commented out unused imports
+// import { validateParameters, formatParameters } from './mcpUtils';
 import networkConfig, { Environment, ServiceType } from '../utils/networkConfig';
 
 // Promisify exec
@@ -30,7 +31,7 @@ export enum ConnectionMethod {
  */
 export class EnhancedMCPClient {
   private outputChannel: vscode.OutputChannel;
-  private toolSchemas: Record<string, IMCPToolSchema> = {};
+  // private toolSchemas: Record<string, any> = {};
   private serverUrl: string;
   private connectionMethod: ConnectionMethod;
   private containerName: string | null = null;
@@ -49,12 +50,12 @@ export class EnhancedMCPClient {
     this.serverUrl = networkConfig.getServiceUrl(serviceType);
     this.connectionMethod = connectionMethod || this.detectConnectionMethod();
     this.outputChannel = vscode.window.createOutputChannel(`Adamize MCP Client: ${serviceType}`);
-    
+
     // Show output channel in development environment
     if (networkConfig.getCurrentEnvironment() === Environment.Development) {
       this.outputChannel.show();
     }
-    
+
     this.logDebug(`Created client for ${serviceType} using ${this.connectionMethod} method`);
     this.logDebug(`Server URL/Container: ${this.serverUrl}`);
   }
@@ -64,12 +65,12 @@ export class EnhancedMCPClient {
    */
   private detectConnectionMethod(): ConnectionMethod {
     const env = networkConfig.getCurrentEnvironment();
-    
+
     // Check if MCP proxy is enabled
     if (process.env.MCP_PROXY_ENABLED === 'true') {
       return ConnectionMethod.HTTP;
     }
-    
+
     // In development, prefer Docker exec for MCP containers
     if (env === Environment.Development) {
       // If the service URL looks like a container name (no protocol)
@@ -78,7 +79,7 @@ export class EnhancedMCPClient {
         return ConnectionMethod.DockerExec;
       }
     }
-    
+
     // Default to HTTP
     return ConnectionMethod.HTTP;
   }
@@ -104,7 +105,7 @@ export class EnhancedMCPClient {
    * @param message The message to log
    * @param error Optional error object
    */
-  private logError(message: string, error?: any): void {
+  private logError(message: string, error?: Error | unknown): void {
     this.outputChannel.appendLine(`[ERROR] ${message}`);
     if (error) {
       this.outputChannel.appendLine(`Error details: ${error}`);
@@ -118,7 +119,7 @@ export class EnhancedMCPClient {
   public async connect(): Promise<boolean> {
     try {
       this.logInfo(`Connecting to MCP service (${this.serviceType}) using ${this.connectionMethod} method`);
-      
+
       switch (this.connectionMethod) {
         case ConnectionMethod.HTTP:
           return await this.connectHttp();
@@ -143,7 +144,7 @@ export class EnhancedMCPClient {
     try {
       // Check if server is available
       const response = await axios.get(`${this.serverUrl}/connection`);
-      
+
       if (response.status === 200) {
         this.logInfo('Connected to MCP server via HTTP');
         return true;
@@ -166,19 +167,19 @@ export class EnhancedMCPClient {
       if (!this.containerName) {
         throw new Error('Container name is not set');
       }
-      
+
       // Get container ID
       const { stdout } = await execPromise(
         `docker ps --filter ancestor=${this.containerName} --format "{{.ID}}"`
       );
-      
+
       this.containerId = stdout.trim();
-      
+
       if (!this.containerId) {
         this.logError(`No running container found for image ${this.containerName}`);
         return false;
       }
-      
+
       this.logInfo(`Connected to MCP container ${this.containerName} (${this.containerId}) via Docker exec`);
       return true;
     } catch (error) {
@@ -205,11 +206,11 @@ export class EnhancedMCPClient {
    */
   public async callFunction(
     functionName: string,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
     try {
       this.logInfo(`Calling function ${functionName} with method ${this.connectionMethod}`);
-      
+
       switch (this.connectionMethod) {
         case ConnectionMethod.HTTP:
           return await this.callFunctionHttp(functionName, parameters);
@@ -222,7 +223,7 @@ export class EnhancedMCPClient {
       }
     } catch (error) {
       this.logError(`Error calling function ${functionName}: ${error}`);
-      
+
       return {
         status: 'error',
         error: error instanceof Error ? error.message : String(error),
@@ -238,7 +239,7 @@ export class EnhancedMCPClient {
    */
   private async callFunctionHttp(
     functionName: string,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
     try {
       // Call function
@@ -247,11 +248,11 @@ export class EnhancedMCPClient {
         function: functionName,
         parameters,
       });
-      
+
       const result = response.data;
-      
+
       this.logInfo(`Function ${functionName} called successfully via HTTP`);
-      
+
       return result;
     } catch (error) {
       this.logError(`Error calling function ${functionName} via HTTP: ${error}`);
@@ -267,13 +268,13 @@ export class EnhancedMCPClient {
    */
   private async callFunctionDockerExec(
     functionName: string,
-    parameters: Record<string, any>
+    parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
     try {
       if (!this.containerId) {
         throw new Error('Container ID is not set. Did you call connect()?');
       }
-      
+
       // Create JSON-RPC request
       const request = {
         jsonrpc: '2.0',
@@ -281,23 +282,23 @@ export class EnhancedMCPClient {
         method: functionName,
         params: parameters
       };
-      
+
       // Convert request to JSON
       const requestJson = JSON.stringify(request);
-      
+
       // Call the tool using docker exec
       const cmd = `docker exec -i ${this.containerId} sh -c "echo '${requestJson}' | node dist/index.js"`;
       const { stdout, stderr } = await execPromise(cmd);
-      
+
       if (stderr) {
         this.logError(`Error from container:`, stderr);
       }
-      
+
       // Parse response
       const response = JSON.parse(stdout);
-      
+
       this.logInfo(`Function ${functionName} called successfully via Docker exec`);
-      
+
       return {
         status: 'success',
         result: response.result
@@ -315,8 +316,8 @@ export class EnhancedMCPClient {
    * @returns The function call result
    */
   private async callFunctionLocalProcess(
-    functionName: string,
-    parameters: Record<string, any>
+    _functionName: string,
+    _parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
     // Not implemented yet
     this.logError('Local process connection method is not implemented yet');
