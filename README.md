@@ -121,10 +121,14 @@ This project follows a strict test-driven development workflow:
 
 - `npm run tdd` - Watch for changes and run tests automatically
 - `npm run tdd:mcp` - Focus on MCP client implementation
+- `npm run tdd:auto-stage` - Watch for changes and automatically stage passing tests
+- `npm run tdd:auto-commit` - Watch for changes and automatically commit passing tests
 - `npm run create:test` - Generate a new test file from template
 - `npm run test:unit` - Run Jest unit tests
 - `npm run test:unit:watch` - Run Jest tests in watch mode
 - `npm run test:coverage` - Generate coverage reports
+- `npm run identify:green` - Identify and stage passing tests and their implementations
+- `npm run identify:green:commit` - Identify, stage, and commit passing tests
 
 ### Tagging System
 
@@ -174,6 +178,38 @@ For MCP-specific TDD:
 
 ```bash
 npm run tdd:mcp
+```
+
+For TDD with automatic staging of passing tests:
+
+```bash
+npm run tdd:auto-stage
+```
+
+For TDD with automatic committing of passing tests:
+
+```bash
+npm run tdd:auto-commit
+```
+
+### Identifying GREEN Code-Test Pairs
+
+To identify and stage passing tests and their implementations:
+
+```bash
+npm run identify:green
+```
+
+To identify, stage, and commit passing tests:
+
+```bash
+npm run identify:green:commit
+```
+
+To see what would be staged/committed without actually doing it:
+
+```bash
+npm run identify:green:dry
 ```
 
 ## Building

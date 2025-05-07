@@ -182,6 +182,8 @@
     "test:watch": "nodemon --watch src --ext ts --exec 'npm test'",
     "tdd": "node scripts/tdd.js",
     "tdd:mcp": "node scripts/tdd.js --watch-path=src/mcp --test-path=src/test/suite",
+    "tdd:auto-stage": "node scripts/tdd.js --auto-stage",
+    "tdd:auto-commit": "node scripts/tdd.js --auto-commit",
     "create:test": "node scripts/create-test.js",
     "create:enhanced-test": "node scripts/create-enhanced-test.js",
     "update:tests": "node scripts/update-tests.js",
@@ -191,7 +193,10 @@
     "lint:fix": "eslint src --ext ts --fix",
     "precommit": "lint-staged",
     "package": "@vscode/vsce package",
-    "publish": "@vscode/vsce publish"
+    "publish": "@vscode/vsce publish",
+    "identify:green": "node scripts/identify-green-pairs.js",
+    "identify:green:commit": "node scripts/identify-green-pairs.js --commit",
+    "identify:green:dry": "node scripts/identify-green-pairs.js --dry-run --verbose"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
