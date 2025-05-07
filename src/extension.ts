@@ -128,17 +128,24 @@ export function activate(context: vscode.ExtensionContext) {
         throw new Error('No memory client available');
       }
 
-      if (result.status === 'success' && result.result && result.result.entities) {
-        const entities = result.result.entities;
-        vscode.window.showInformationMessage(`Found ${entities.length} entities matching "${query}"`);
+      if (result.status === 'success' && result.result) {
+        // Type guard to check if result has the expected structure
+        const resultObj = result.result as Record<string, unknown>;
 
-        // Show results in a new editor
-        const document = await vscode.workspace.openTextDocument({
-          content: JSON.stringify(entities, null, 2),
-          language: 'json'
-        });
+        if (resultObj && 'entities' in resultObj && Array.isArray(resultObj.entities)) {
+          const entities = resultObj.entities;
+          vscode.window.showInformationMessage(`Found ${entities.length} entities matching "${query}"`);
 
-        await vscode.window.showTextDocument(document);
+          // Show results in a new editor
+          const document = await vscode.workspace.openTextDocument({
+            content: JSON.stringify(entities, null, 2),
+            language: 'json'
+          });
+
+          await vscode.window.showTextDocument(document);
+        } else {
+          vscode.window.showInformationMessage(`No entities found matching "${query}"`);
+        }
       } else {
         vscode.window.showErrorMessage(`Error searching memory: ${result.error || 'Unknown error'}`);
       }
