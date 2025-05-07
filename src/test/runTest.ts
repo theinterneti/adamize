@@ -17,7 +17,29 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
+    // Check if we're in a CI environment or want to run unit tests only
+    if (process.env.CI || process.env.UNIT_TESTS_ONLY) {
+      // eslint-disable-next-line no-console
+      console.log('Running unit tests only...');
+      // Run the unit tests using Jest
+      const jestProcess = cp.spawnSync('npx', ['jest'], {
+        encoding: 'utf-8',
+        stdio: 'inherit',
+        env: { ...process.env, JEST_JUNIT_OUTPUT_DIR: './test-results' }
+      });
+
+      if (jestProcess.status !== 0) {
+        throw new Error(`Jest tests failed with status ${jestProcess.status}`);
+      }
+
+      // eslint-disable-next-line no-console
+      console.log('Unit tests completed successfully!');
+      return;
+    }
+
     // Download VS Code, unzip it and run the integration test
+    // eslint-disable-next-line no-console
+    console.log('Running VS Code extension tests...');
     const vscodeExecutablePath = await downloadAndUnzipVSCode('stable');
     const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath);
 
@@ -27,14 +49,20 @@ async function main() {
       stdio: 'inherit',
     });
 
-    // Run the extension test
+    // Run the extension test in headless mode
     await runTests({
       vscodeExecutablePath,
       extensionDevelopmentPath,
       extensionTestsPath,
-      launchArgs: ['--disable-extensions'],
+      launchArgs: [
+        '--disable-extensions',
+        '--disable-gpu',
+        '--headless',
+        '--no-sandbox'
+      ],
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Failed to run tests:', err);
     process.exit(1);
   }

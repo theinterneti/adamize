@@ -1,0 +1,36 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "name": "Adamize API Documentation",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "categorizeByGroup": true,
+  "searchInComments": true,
+  "sort": ["static-first", "alphabetical"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/theinterneti/adamize",
+    "Documentation": "https://github.com/theinterneti/adamize/tree/main/docs"
+  },
+  "sidebarLinks": {
+    "API": "https://github.com/theinterneti/adamize/tree/main/docs/api"
+  },
+  "visibilityFilters": {
+    "protected": true,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "requiredToBeDocumented": ["class", "interface", "enum", "function", "typeAlias"],
+  "validation": {
+    "invalidLink": true,
+    "notDocumented": true
+  }
+}

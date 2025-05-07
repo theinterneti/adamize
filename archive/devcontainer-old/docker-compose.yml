@@ -1,0 +1,144 @@
+version: '3.8'
+
+# Import the development environment from profiles
+services:
+  # Development Environment
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    volumes:
+      # Mount the root folder that contains .devcontainer folder
+      - ..:/workspace:cached
+      
+      # Mount Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      
+      # Mount reference volumes from augment-adam using Docker volume
+      - augment-adam-ref:/workspace/reference/augment-adam:ro
+      
+      # Cache volumes for faster builds and package installations
+      - node-modules:/workspace/node_modules:cached
+      - npm-cache:/home/node/.npm:cached
+      - vscode-server:/home/node/.vscode-server:cached
+      
+      # Mount Git config
+      - ~/.gitconfig:/home/node/.gitconfig:ro
+      
+      # VS Code extensions for development
+      - ~/.vscode/extensions:/home/node/.vscode-server/extensions:cached
+      
+      # Additional cache directories
+      - vscode-extensions:/home/node/.vscode-server/extensions:cached
+      - vscode-insiders:/home/node/.vscode-server-insiders:cached
+    environment:
+      # Environment type
+      - NODE_ENV=development
+      - ADAMIZE_ENV=development
+      - NODE_ENV_DEV=true
+      
+      # Service connections - Use the host's IP address directly
+      - CHROMA_HOST=http://chroma:8000
+      - AUGMENT_HOST=http://172.31.16.1:8000
+      - MCP_MEMORY_CONTAINER=mcp/memory
+      - MCP_NEO4J_MEMORY_CONTAINER=mcp/neo4j-memory
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      
+      # Host access configuration
+      - HOST_DOCKER_INTERNAL=172.31.16.1
+      
+      # MCP proxy configuration
+      - MCP_PROXY_PORT=8000
+      - MCP_PROXY_ENABLED=true
+      
+      # Debug settings
+      - DEBUG=adamize:*,augment:*
+      - DEBUG_LEVEL=verbose
+      - AUGMENT_DEBUG=true
+    ports:
+      - "3000:3000"  # Web server
+      - "9229:9229"  # Node.js debugging
+    user: node
+    networks:
+      - adamize-network
+      - neo4j-network
+    extra_hosts:
+      - "host.docker.internal:172.31.16.1"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://registry.npmjs.org/", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - chroma
+      - neo4j
+    command: /bin/sh -c "cd /workspace && bash .devcontainer/scripts/post-start.sh && sleep infinity"
+
+  # ChromaDB for development
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma-data:/chroma/chroma
+    expose:
+      - "8000"
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+    extra_hosts:
+      - "host.docker.internal:172.31.16.1"
+    networks:
+      - adamize-network
+      - neo4j-network
+
+  # Neo4j for development
+  neo4j:
+    image: neo4j:5.9.0
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    volumes:
+      - neo4j-data:/data
+    expose:
+      - "7474"
+      - "7687"
+    networks:
+      - adamize-network
+      - neo4j-network
+
+networks:
+  adamize-network:
+    name: adamize-network
+  neo4j-network:
+    external: true
+
+volumes:
+  # Define named volumes
+  node-modules:
+  npm-cache:
+  vscode-server:
+    # Ensure this volume is created with the correct permissions
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${HOME}/.vscode-server-adamize
+  vscode-extensions:
+  vscode-insiders:
+  chroma-data:
+  neo4j-data:
+  augment-adam-ref:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/thein/projects/augment-adam

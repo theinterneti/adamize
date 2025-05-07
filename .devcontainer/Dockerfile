@@ -1,52 +1,61 @@
-FROM node:18-bullseye
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:20
 
-# Avoid warnings by switching to noninteractive
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Configure apt and install packages
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
-    && apt-get -y install git iproute2 procps lsb-release gnupg2 curl wget \
-    && apt-get -y install sudo \
-    && apt-get autoremove -y \
+# Install additional tools
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+    curl \
+    git \
+    gnupg \
+    jq \
+    procps \
+    wget \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup non-root user
+# Install global npm packages
+RUN npm install -g \
+    yo \
+    generator-code \
+    @vscode/vsce \
+    typescript \
+    eslint \
+    prettier
+
+# Set up a non-root user with sudo access
 ARG USERNAME=node
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-# Add sudo support
-RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+# Create the user
+RUN if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then \
+    groupmod --gid $USER_GID $USERNAME \
+    && usermod --uid $USER_UID --gid $USER_GID $USERNAME \
+    && chown -R $USER_UID:$USER_GID /home/$USERNAME; \
+    fi
 
-# Install Docker CLI
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list \
-    && apt-get update \
-    && apt-get -y install --no-install-recommends docker-ce-cli \
-    && apt-get autoremove -y \
+# Add sudo support
+RUN apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install global Node.js packages
-RUN npm install -g typescript@latest \
-    && npm install -g @vscode/vsce \
-    && npm install -g yo generator-code \
-    && npm install -g eslint \
-    && npm install -g prettier \
-    && npm install -g jest
+# Set the default user
+USER $USERNAME
 
-# Switch back to dialog for any ad-hoc use of apt-get
-ENV DEBIAN_FRONTEND=dialog
+# Set up npm configuration
+RUN npm config set registry https://registry.npmjs.org/ \
+    && npm config set fetch-timeout 60000
 
-# Set the default shell to bash instead of sh
-ENV SHELL /bin/bash
+# Create workspace directory with proper permissions
+USER root
+RUN mkdir -p /workspace \
+    && chown -R $USERNAME:$USERNAME /workspace \
+    && chmod -R 755 /workspace
+USER $USERNAME
 
-# Create workspace directory
-RUN mkdir -p /workspace
 WORKDIR /workspace
 
-# Switch to non-root user
-USER $USERNAME
+# Set environment variables
+ENV NODE_ENV=development

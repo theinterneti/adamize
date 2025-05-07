@@ -1,0 +1,95 @@
+{
+  "name": "Adamize: VS Code Extension Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": true,
+      "installDockerBuildx": true,
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+
+  // VS Code settings
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.vscode-js-profile-flame",
+        "amodio.tsl-problem-matcher",
+        "ms-vscode.extension-test-runner",
+        "orta.vscode-jest",
+        "ryanluker.vscode-coverage-gutters",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
+        "eamodio.gitlens",
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "github.copilot",
+        "",
+        "Augment.vscode-augment"
+      ],
+      "settings": {
+        // TypeScript settings
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true,
+        "typescript.preferences.importModuleSpecifier": "relative",
+
+        // Editor settings
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true,
+          "source.organizeImports": true
+        },
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.rulers": [100],
+        "editor.tabSize": 2,
+
+        // ESLint settings
+        "eslint.validate": ["typescript", "javascript"],
+        "eslint.format.enable": true,
+
+        // Terminal settings
+        "terminal.integrated.defaultProfile.linux": "bash",
+
+        // File exclusions
+        "files.exclude": {
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/node_modules": true,
+          "**/out": true,
+          "**/*.vsix": true
+        },
+
+        // Git settings
+        "git.autofetch": true,
+        "gitlens.codeLens.enabled": true
+      }
+    }
+  },
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": "npm install",
+
+  // Run commands after the container is created and started
+  "postStartCommand": "bash /workspace/.devcontainer/scripts/post-start.sh",
+
+  // Comment out to connect as root instead
+  "remoteUser": "node",
+
+  // Environment variables
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  }
+}

@@ -1,16 +1,24 @@
 # Adamize Project Guidelines
 
 ## Project Overview
-Adamize is a VS Code extension project focused on creating a development assistant similar to Augment Code but with specific differences and improvements. The project follows a test-driven development approach with a strong emphasis on DevOps best practices.
+Adamize is a VS Code extension project focused on creating a development assistant similar to Augment Code but with specific differences and improvements. The project follows a test-driven development approach with a strong emphasis on DevOps best practices and integrates with local LLMs through the Model Context Protocol (MCP).
 
 ## Development Workflow
 This project follows a strict test-driven development workflow:
 
-1. Define requirements and acceptance criteria
-2. Write tests that validate the requirements
-3. Implement code to pass the tests
+1. Define requirements and acceptance criteria with clear requirement tags
+2. Write tests that validate the requirements with corresponding test tags
+3. Implement code to pass the tests with implementation tags
 4. Refactor while maintaining test coverage
 5. Document the implementation
+
+### TDD Workflow Commands
+- `npm run tdd` - Watch for changes and run tests automatically
+- `npm run tdd:mcp` - Focus on MCP client implementation
+- `npm run create:test` - Generate a new test file from template
+- `npm run test:unit` - Run Jest unit tests
+- `npm run test:unit:watch` - Run Jest tests in watch mode
+- `npm run test:coverage` - Generate coverage reports
 
 ## Code Standards
 - TypeScript for all code
@@ -19,6 +27,16 @@ This project follows a strict test-driven development workflow:
 - Jest for testing
 - 100% test coverage for core functionality
 - Documentation for all public APIs
+- Strict TypeScript configuration
+- Comprehensive type definitions
+- Requirement tags for traceability
+
+### Tagging System
+- `REQ-XXX-YYY` - Requirement tags (e.g., REQ-MCP-001)
+- `TEST-XXX-YYY` - Test tags (e.g., TEST-MCP-001)
+- `IMPL-XXX-YYY` - Implementation tags (e.g., IMPL-MCP-001)
+
+This tagging system ensures traceability between requirements, tests, and implementation code.
 
 ## Git Workflow
 - Feature branches for all changes
@@ -34,14 +52,51 @@ The first feature to be implemented is an MCP (Model Context Protocol) client th
 - Call functions on tools
 - Handle responses and errors
 
+### MCP Client Requirements
+- **REQ-MCP-001**: Connect to an MCP server via HTTP
+- **REQ-MCP-002**: Discover available tools from the MCP server
+- **REQ-MCP-003**: Retrieve the schema for a specific tool
+- **REQ-MCP-010**: Call functions on tools with parameters
+- **REQ-MCP-011**: Validate parameters against the function schema
+- **REQ-MCP-012**: Handle successful function call responses
+- **REQ-MCP-013**: Handle error responses from function calls
+- **REQ-MCP-020**: Handle connection errors gracefully
+- **REQ-MCP-021**: Handle tool discovery errors gracefully
+- **REQ-MCP-022**: Handle schema retrieval errors gracefully
+- **REQ-MCP-023**: Handle parameter validation errors gracefully
+- **REQ-MCP-030**: Log connection attempts and results
+- **REQ-MCP-031**: Log tool discovery attempts and results
+- **REQ-MCP-032**: Log function calls and results
+- **REQ-MCP-033**: Log errors with appropriate detail
+
 ## Project Structure
 - `src/` - Source code
   - `extension.ts` - Extension entry point
   - `mcp/` - MCP client implementation
+    - `mcpClient.ts` - Main MCP client class
+    - `mcpTypes.ts` - Type definitions
+    - `mcpUtils.ts` - Utility functions
   - `test/` - Test code
+    - `suite/` - Test suites
+      - `mcp/` - MCP client tests
+        - `mcpClient.test.ts` - Tests for MCP client
+        - `mcpUtils.test.ts` - Tests for utility functions
+    - `templates/` - Test templates
+    - `setup.ts` - Test setup
+    - `runTest.ts` - Test runner
 - `docs/` - Documentation
+  - `CONTRIBUTING.md` - Contribution guidelines
+  - `dev/` - Development documentation
+    - `research/` - Research documents
+- `scripts/` - Development scripts
+  - `tdd.js` - TDD helper script
+  - `create-test.js` - Test generator script
 - `.devcontainer/` - Development container configuration
 - `.github/` - GitHub workflows and templates
+  - `workflows/` - GitHub Actions workflows
+    - `ci.yml` - Continuous integration workflow
+    - `release.yml` - Release workflow
+    - `pr-validation.yml` - Pull request validation workflow
 
 ## Development Environment
 The project uses a dedicated DevContainer for development to ensure consistency and isolation from the host system. The DevContainer includes:
@@ -57,6 +112,23 @@ The project uses a dedicated DevContainer for development to ensure consistency 
 - End-to-end tests for user workflows
 - Coverage reports for all tests
 - Automated testing in CI/CD pipeline
+
+### MCP Client Test Plan
+- **TEST-MCP-001**: Test that the client can connect to an MCP server successfully
+- **TEST-MCP-001a**: Test that the client handles connection errors gracefully
+- **TEST-MCP-002**: Test that the client can discover available tools from the MCP server
+- **TEST-MCP-002a**: Test that the client handles tool discovery errors gracefully
+- **TEST-MCP-003**: Test that the client can retrieve the schema for a specific tool
+- **TEST-MCP-003a**: Test that the client handles schema retrieval errors gracefully
+- **TEST-MCP-010**: Test that the client can call functions on tools with parameters
+- **TEST-MCP-011**: Test that the client validates parameters against the function schema
+- **TEST-MCP-011a**: Test that the client rejects invalid parameters
+- **TEST-MCP-012**: Test that the client handles successful function call responses
+- **TEST-MCP-013**: Test that the client handles error responses from function calls
+- **TEST-MCP-030**: Test that the client logs connection attempts and results
+- **TEST-MCP-031**: Test that the client logs tool discovery attempts and results
+- **TEST-MCP-032**: Test that the client logs function calls and results
+- **TEST-MCP-033**: Test that the client logs errors with appropriate detail
 
 ## Documentation Requirements
 - README.md with project overview and setup instructions

@@ -10,50 +10,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js 18.x
-      uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
       with:
-        node-version: 18.x
+        node-version: 20.x
         cache: 'npm'
-    
+
     - name: Install dependencies
       run: npm ci
-    
+
     - name: Lint
       run: npm run lint
-    
+
     - name: Build
       run: npm run compile
-    
+
+    - name: Check for TypeScript errors
+      run: npm run typecheck
+
     - name: Test
       run: npm test
-    
+
     - name: Package
       run: npm run package
-    
+
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./adamize-${{ github.ref_name }}.vsix
-        asset_name: adamize-${{ github.ref_name }}.vsix
-        asset_content_type: application/octet-stream
-    
+        files: |
+          ./adamize-${{ github.ref_name }}.vsix
+
     - name: Publish to VS Code Marketplace
       if: success()
       run: npx vsce publish -p ${{ secrets.VSCE_PAT }}

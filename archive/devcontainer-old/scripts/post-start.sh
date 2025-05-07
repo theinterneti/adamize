@@ -13,6 +13,24 @@ if [ -S /var/run/docker.sock ]; then
     docker ps &>/dev/null && echo "Docker access is working!" || echo "Docker access is still not working"
 fi
 
+# Fix VS Code Server permissions
+if [ -f "/workspace/.devcontainer/scripts/fix-vscode-permissions.sh" ]; then
+    echo "Running VS Code Server permissions fix..."
+    bash /workspace/.devcontainer/scripts/fix-vscode-permissions.sh
+fi
+
+# Fix workspace permissions
+if [ -f "/workspace/.devcontainer/scripts/fix-permissions.sh" ]; then
+    echo "Running workspace permissions fix..."
+    bash /workspace/.devcontainer/scripts/fix-permissions.sh
+fi
+
+# Fix network configuration
+if [ -f "/workspace/.devcontainer/scripts/fix-network.sh" ]; then
+    echo "Running network configuration fix..."
+    bash /workspace/.devcontainer/scripts/fix-network.sh
+fi
+
 # Install VS Code Extension Development dependencies if not already installed
 if [ ! -d "node_modules" ]; then
     echo "Installing dependencies..."
@@ -26,7 +44,7 @@ mkdir -p .vscode
 # Create .vscode/launch.json if it doesn't exist
 if [ ! -f ".vscode/launch.json" ]; then
     echo "Creating launch.json..."
-    cat > .vscode/launch.json << 'EOL'
+    cat > .vscode/launch.json << 'LAUNCH_EOL'
 {
   "version": "0.2.0",
   "configurations": [
@@ -57,13 +75,13 @@ if [ ! -f ".vscode/launch.json" ]; then
     }
   ]
 }
-EOL
+LAUNCH_EOL
 fi
 
 # Create .vscode/tasks.json if it doesn't exist
 if [ ! -f ".vscode/tasks.json" ]; then
     echo "Creating tasks.json..."
-    cat > .vscode/tasks.json << 'EOL'
+    cat > .vscode/tasks.json << 'TASKS_EOL'
 {
   "version": "2.0.0",
   "tasks": [
@@ -82,7 +100,31 @@ if [ ! -f ".vscode/tasks.json" ]; then
     }
   ]
 }
-EOL
+TASKS_EOL
+fi
+
+# Configure network settings
+if [ -f "/workspace/.devcontainer/scripts/configure-network.sh" ]; then
+    echo "Configuring network settings..."
+    bash /workspace/.devcontainer/scripts/configure-network.sh
+fi
+
+# Check internet connectivity
+if [ -f "/workspace/.devcontainer/scripts/check-internet.sh" ]; then
+    echo "Checking internet connectivity..."
+    bash /workspace/.devcontainer/scripts/check-internet.sh
+fi
+
+# Debug Augment connectivity
+if [ -f "/workspace/.devcontainer/scripts/debug-augment.sh" ]; then
+    echo "Debugging Augment connectivity..."
+    bash /workspace/.devcontainer/scripts/debug-augment.sh
+fi
+
+# Start MCP Proxy Server
+if [ -f "/workspace/.devcontainer/scripts/start-mcp-proxy.sh" ]; then
+    echo "Starting MCP Proxy Server..."
+    bash /workspace/.devcontainer/scripts/start-mcp-proxy.sh
 fi
 
 echo "Post-start setup completed!"
