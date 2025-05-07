@@ -1,0 +1,106 @@
+2025-05-06T03:10:40.971Z - info > 	Generating system env file
+2025-05-06T03:10:41.213Z - info > 	Connected to the queue
+2025-05-06T03:10:41.284Z - info > 	Log level info
+2025-05-06T03:10:41.292Z - info > 	Logs flushed
+2025-05-06T03:10:41.293Z - info > 	Running version: v4.0.3
+2025-05-06T03:10:41.293Z - info > 	Generating system env file...
+2025-05-06T03:10:41.294Z - info > 	Clearing cache...
+2025-05-06T03:10:41.315Z - info > 	Migrating default repo
+2025-05-06T03:10:45.918Z - info > 	Cloned repo https://github.com/runtipi/runtipi-appstore to /data/repos/migrated
+2025-05-06T03:10:46.584Z - info > 	Cloned repo https://github.com/runtipi/runtipi-appstore to /data/repos/migrated
+2025-05-06T03:10:47.232Z - info > 	Creating traefik folders
+2025-05-06T03:10:47.233Z - info > 	Copying traefik files
+2025-05-06T03:10:47.234Z - info > 	Creating base folders
+2025-05-06T03:10:47.235Z - info > 	Creating media folders
+2025-05-06T03:10:47.242Z - info > 	Generating TLS certificate for tipi.local
+2025-05-06T03:10:47.455Z - info > 	Writing txt file for tipi.local
+2025-05-06T03:11:48.719Z - info > 	Generating system env file
+2025-05-06T03:11:48.933Z - info > 	Log level info
+2025-05-06T03:11:48.945Z - info > 	Logs flushed
+2025-05-06T03:11:48.945Z - info > 	Running version: v4.0.3
+2025-05-06T03:11:48.945Z - info > 	Generating system env file...
+2025-05-06T03:11:48.967Z - info > 	Connected to the queue
+2025-05-06T03:12:02.752Z - info > 	Creating traefik folders
+2025-05-06T03:12:02.754Z - info > 	Copying traefik files
+2025-05-06T03:12:02.755Z - info > 	Creating base folders
+2025-05-06T03:12:02.756Z - info > 	Creating media folders
+2025-05-06T03:12:02.781Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:13:22.192Z - info > 	Generating system env file
+2025-05-06T03:13:22.462Z - info > 	Log level info
+2025-05-06T03:13:22.474Z - info > 	Logs flushed
+2025-05-06T03:13:22.475Z - info > 	Running version: v4.0.3
+2025-05-06T03:13:22.475Z - info > 	Generating system env file...
+2025-05-06T03:13:22.487Z - info > 	Connected to the queue
+2025-05-06T03:13:38.452Z - info > 	Creating traefik folders
+2025-05-06T03:13:38.454Z - info > 	Copying traefik files
+2025-05-06T03:13:38.456Z - info > 	Creating base folders
+2025-05-06T03:13:38.458Z - info > 	Creating media folders
+2025-05-06T03:13:38.505Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:18:00.175Z - info > 	Generating system env file
+2025-05-06T03:18:00.400Z - info > 	Log level info
+2025-05-06T03:18:00.411Z - info > 	Logs flushed
+2025-05-06T03:18:00.412Z - info > 	Running version: v4.0.3
+2025-05-06T03:18:00.412Z - info > 	Generating system env file...
+2025-05-06T03:18:00.433Z - info > 	Connected to the queue
+2025-05-06T03:18:13.307Z - info > 	Creating traefik folders
+2025-05-06T03:18:13.308Z - info > 	Copying traefik files
+2025-05-06T03:18:13.309Z - info > 	Creating base folders
+2025-05-06T03:18:13.310Z - info > 	Creating media folders
+2025-05-06T03:18:13.332Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:21:57.174Z - info > 	Generating system env file
+2025-05-06T03:21:57.406Z - info > 	Log level info
+2025-05-06T03:21:57.418Z - info > 	Logs flushed
+2025-05-06T03:21:57.419Z - info > 	Running version: v4.0.3
+2025-05-06T03:21:57.419Z - info > 	Generating system env file...
+2025-05-06T03:21:57.492Z - info > 	Connected to the queue
+2025-05-06T03:22:10.257Z - info > 	Creating traefik folders
+2025-05-06T03:22:10.270Z - info > 	Copying traefik files
+2025-05-06T03:22:10.271Z - info > 	Creating base folders
+2025-05-06T03:22:10.273Z - info > 	Creating media folders
+2025-05-06T03:22:10.356Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:23:25.075Z - info > 	Generating system env file
+2025-05-06T03:23:25.292Z - info > 	Log level info
+2025-05-06T03:23:25.304Z - info > 	Logs flushed
+2025-05-06T03:23:25.304Z - info > 	Running version: v4.0.3
+2025-05-06T03:23:25.304Z - info > 	Generating system env file...
+2025-05-06T03:23:25.321Z - info > 	Connected to the queue
+2025-05-06T03:23:37.519Z - info > 	Creating traefik folders
+2025-05-06T03:23:37.521Z - info > 	Copying traefik files
+2025-05-06T03:23:37.521Z - info > 	Creating base folders
+2025-05-06T03:23:37.523Z - info > 	Creating media folders
+2025-05-06T03:23:37.547Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:24:56.320Z - info > 	Generating system env file
+2025-05-06T03:24:56.625Z - info > 	Log level info
+2025-05-06T03:24:56.638Z - info > 	Logs flushed
+2025-05-06T03:24:56.638Z - info > 	Running version: v4.0.3
+2025-05-06T03:24:56.638Z - info > 	Generating system env file...
+2025-05-06T03:24:56.710Z - info > 	Connected to the queue
+2025-05-06T03:25:10.886Z - info > 	Creating traefik folders
+2025-05-06T03:25:10.887Z - info > 	Copying traefik files
+2025-05-06T03:25:10.888Z - info > 	Creating base folders
+2025-05-06T03:25:10.889Z - info > 	Creating media folders
+2025-05-06T03:25:10.919Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:26:41.957Z - info > 	Generating system env file
+2025-05-06T03:26:42.197Z - info > 	Log level info
+2025-05-06T03:26:42.214Z - info > 	Logs flushed
+2025-05-06T03:26:42.215Z - info > 	Running version: v4.0.3
+2025-05-06T03:26:42.215Z - info > 	Generating system env file...
+2025-05-06T03:26:42.223Z - info > 	Connected to the queue
+2025-05-06T03:26:56.203Z - info > 	Creating traefik folders
+2025-05-06T03:26:56.206Z - info > 	Copying traefik files
+2025-05-06T03:26:56.209Z - info > 	Creating base folders
+2025-05-06T03:26:56.211Z - info > 	Creating media folders
+2025-05-06T03:26:56.247Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:28:07.914Z - info > 	Generating system env file
+2025-05-06T03:28:08.157Z - info > 	Log level info
+2025-05-06T03:28:08.167Z - info > 	Logs flushed
+2025-05-06T03:28:08.168Z - info > 	Running version: v4.0.3
+2025-05-06T03:28:08.168Z - info > 	Generating system env file...
+2025-05-06T03:28:08.238Z - info > 	Connected to the queue
+2025-05-06T03:28:22.290Z - info > 	Creating traefik folders
+2025-05-06T03:28:22.292Z - info > 	Copying traefik files
+2025-05-06T03:28:22.294Z - info > 	Creating base folders
+2025-05-06T03:28:22.296Z - info > 	Creating media folders
+2025-05-06T03:28:22.326Z - info > 	TLS certificate for tipi.local already exists
+2025-05-06T03:31:21.310Z - info > 	Generating system env file
+2025-05-06T03:31:21.539Z - info > 	Log level info
