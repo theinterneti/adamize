@@ -1,6 +1,6 @@
 /**
  * Process Utilities
- * 
+ *
  * Wrapper functions for child_process to make testing easier.
  */
 
@@ -17,7 +17,11 @@ const execPromise = promisify(exec);
  * @returns Promise with stdout and stderr
  */
 export async function executeCommand(command: string, options?: ExecOptions): Promise<{ stdout: string; stderr: string }> {
-  return execPromise(command, options);
+  const result = await execPromise(command, options);
+  return {
+    stdout: result.stdout.toString(),
+    stderr: result.stderr.toString()
+  };
 }
 
 /**
@@ -27,7 +31,7 @@ export async function executeCommand(command: string, options?: ExecOptions): Pr
  * @param options Spawn options
  * @returns Child process
  */
-export function spawnProcess(command: string, args: string[], options?: SpawnOptions): ChildProcess {
+export function spawnProcess(command: string, args: string[], options: SpawnOptions = {}): ChildProcess {
   return spawn(command, args, options);
 }
 

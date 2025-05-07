@@ -200,7 +200,7 @@ export class EnhancedMCPClient {
 
       // For local process, we don't need to establish a persistent connection
       // We'll just verify that the path exists and is executable
-      const { stdout, stderr } = await processUtils.executeCommand(`ls -l ${this.serverUrl}`);
+      const { stderr } = await processUtils.executeCommand(`ls -l ${this.serverUrl}`);
 
       if (stderr) {
         this.logError(`Error checking local process path: ${stderr}`);

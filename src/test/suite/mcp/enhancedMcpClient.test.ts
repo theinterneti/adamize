@@ -25,8 +25,6 @@ import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpClient';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
 import { EventEmitter } from 'events';
 import networkConfig, { ServiceType, Environment } from '../../../utils/networkConfig';
 import processUtils from '../../../utils/processUtils';
@@ -36,14 +34,13 @@ suite('Enhanced MCP Client Test Suite', () => {
   let axiosGetStub: sinon.SinonStub;
   let axiosPostStub: sinon.SinonStub;
   let executeCommandStub: sinon.SinonStub;
-  let spawnProcessStub: sinon.SinonStub;
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   let client: EnhancedMCPClient;
   let localProcessClient: EnhancedMCPClient;
   let networkConfigStub: sinon.SinonStubbedInstance<typeof networkConfig>;
 
   // Mock process objects
-  let mockProcess: EventEmitter;
+  let mockProcess: any; // Using any for simplicity in tests
 
   // Setup before each test
   setup(() => {
@@ -53,15 +50,14 @@ suite('Enhanced MCP Client Test Suite', () => {
 
     // Create mock process for local process testing
     mockProcess = new EventEmitter();
-    // Add stdout and stderr streams
-    mockProcess.stdout = new EventEmitter();
-    mockProcess.stderr = new EventEmitter();
-    // Add methods
+    // Add stdout and stderr streams and methods as any type
+    mockProcess.stdout = new EventEmitter() as any;
+    mockProcess.stderr = new EventEmitter() as any;
     mockProcess.kill = sinon.stub();
 
     // Stub processUtils methods
     executeCommandStub = sinon.stub(processUtils, 'executeCommand');
-    spawnProcessStub = sinon.stub(processUtils, 'spawnProcess').returns(mockProcess as any);
+    sinon.stub(processUtils, 'spawnProcess').returns(mockProcess as any);
 
     // Set up default return values
     executeCommandStub.resolves({
@@ -88,7 +84,7 @@ suite('Enhanced MCP Client Test Suite', () => {
     // Stub networkConfig
     networkConfigStub = sinon.stub(networkConfig);
     networkConfigStub.getServiceUrl.returns('http://localhost:8000');
-    networkConfigStub.getCurrentEnvironment.returns('development');
+    networkConfigStub.getCurrentEnvironment.returns(Environment.Development);
 
     // Create client instances
     client = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.HTTP);

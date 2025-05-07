@@ -4,11 +4,8 @@
  * Tests for the process utilities module.
  */
 
-import * as assert from 'assert';
 import * as sinon from 'sinon';
-import * as childProcess from 'child_process';
 import { EventEmitter } from 'events';
-import processUtils from '../../../utils/processUtils';
 
 suite('Process Utilities Test Suite', () => {
   // Stubs
@@ -20,9 +17,9 @@ suite('Process Utilities Test Suite', () => {
   setup(() => {
     // Create mock process
     mockProcess = new EventEmitter();
-    // Add stdout and stderr streams
-    mockProcess.stdout = new EventEmitter();
-    mockProcess.stderr = new EventEmitter();
+    // Add stdout and stderr streams as any type
+    mockProcess.stdout = new EventEmitter() as any;
+    mockProcess.stderr = new EventEmitter() as any;
     // Add methods
     mockProcess.kill = sinon.stub();
 

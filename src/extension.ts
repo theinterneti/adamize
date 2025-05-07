@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showInformationMessage('Connected to MCP server');
 
           // Create enhanced memory client
-          enhancedMemoryClient = new EnhancedNeo4jMemoryClient(enhancedMcpClient);
+          enhancedMemoryClient = new EnhancedNeo4jMemoryClient();
         } else {
           vscode.window.showErrorMessage('Failed to connect to MCP server');
           return;
