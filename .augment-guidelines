@@ -15,10 +15,15 @@ This project follows a strict test-driven development workflow:
 ### TDD Workflow Commands
 - `npm run tdd` - Watch for changes and run tests automatically
 - `npm run tdd:mcp` - Focus on MCP client implementation
+- `npm run tdd:auto-stage` - Watch for changes and automatically stage passing tests
+- `npm run tdd:auto-commit` - Watch for changes and automatically commit passing tests
 - `npm run create:test` - Generate a new test file from template
 - `npm run test:unit` - Run Jest unit tests
 - `npm run test:unit:watch` - Run Jest tests in watch mode
 - `npm run test:coverage` - Generate coverage reports
+- `npm run identify:green` - Identify and stage passing tests and their implementations
+- `npm run identify:green:commit` - Identify, stage, and commit passing tests
+- `npm run identify:green:dry` - Dry run to see what would be staged/committed
 
 ## Code Standards
 - TypeScript for all code
@@ -45,6 +50,17 @@ This tagging system ensures traceability between requirements, tests, and implem
 - Semantic versioning for releases
 - Conventional commits for commit messages
 
+### GREEN Code-Test Pairs Identification
+The project includes a feature for identifying "green" code-test pairs (passing tests and their implementations) and staging them for commit. This supports the TDD workflow by making it easier to commit code at the right point in the TDD cycle.
+
+- **Automatic Test Running**: Runs tests to identify passing tests
+- **Implementation File Mapping**: Maps test files to their implementation files
+- **Automatic Staging**: Stages passing tests and their implementations
+- **Automatic Committing**: Optionally commits the staged files
+- **Tag-Based Mapping**: Uses the project's tagging system to map tests to implementations
+
+See `docs/dev/green-code-test-pairs.md` for detailed documentation.
+
 ## MCP Client Implementation
 The first feature to be implemented is an MCP (Model Context Protocol) client that will:
 - Connect to MCP servers
@@ -69,6 +85,39 @@ The first feature to be implemented is an MCP (Model Context Protocol) client th
 - **REQ-MCP-032**: Log function calls and results
 - **REQ-MCP-033**: Log errors with appropriate detail
 
+## MCP Bridge Implementation
+The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in our VS Code extension. It enables local LLM-powered agents to maintain and update a memory graph of project knowledge.
+
+### MCP Bridge Components
+- **VS Code Logger**: Replaces console-based logging with VS Code output channel
+- **Bridge Types**: Defines types for the MCP Bridge components
+- **MCP Bridge Client**: Handles communication with MCP servers
+- **LLM Client**: Handles communication with Ollama (to be implemented)
+- **Tool Registry**: Manages tool registration and discovery (to be implemented)
+- **MCP Bridge**: Core bridge component that manages tool registration and execution (to be implemented)
+- **MCP Bridge Manager**: Manages the bridge lifecycle and integration with VS Code (to be implemented)
+
+### MCP Bridge Requirements
+- **REQ-LOGGER-001**: Replace console-based logging with VS Code output channel
+- **REQ-LOGGER-002**: Support different log levels (debug, info, warn, error)
+- **REQ-LOGGER-003**: Support log formatting
+- **REQ-LOGGER-004**: Support log filtering by level
+- **REQ-TYPES-001**: Adapt types to work with VS Code extension context
+- **REQ-TYPES-002**: Add VS Code-specific types
+- **REQ-TYPES-003**: Ensure compatibility with existing MCP types
+- **REQ-TYPES-004**: Add types for configuration management
+- **REQ-TYPES-005**: Support multiple connection methods
+- **REQ-TYPES-006**: Support multiple MCP servers
+- **REQ-MCPCLIENT-001**: Replace process spawning with VS Code-compatible approach
+- **REQ-MCPCLIENT-002**: Adapt JSON-RPC communication for VS Code
+- **REQ-MCPCLIENT-003**: Integrate with VS Code's output channel for logging
+- **REQ-MCPCLIENT-004**: Add support for multiple connection methods
+- **REQ-MCPCLIENT-005**: Ensure compatibility with existing MCP client
+- **REQ-MCPCLIENT-006**: Support tool discovery and registration
+- **REQ-MCPCLIENT-007**: Support function calling with parameter validation
+- **REQ-MCPCLIENT-008**: Handle connection errors gracefully
+- **REQ-MCPCLIENT-009**: Support multiple MCP servers
+
 ## Project Structure
 - `src/` - Source code
   - `extension.ts` - Extension entry point
@@ -76,11 +125,26 @@ The first feature to be implemented is an MCP (Model Context Protocol) client th
     - `mcpClient.ts` - Main MCP client class
     - `mcpTypes.ts` - Type definitions
     - `mcpUtils.ts` - Utility functions
+    - `bridge/` - MCP Bridge implementation
+      - `vscodeLogger.ts` - VS Code Logger implementation
+      - `bridgeTypes.ts` - Bridge type definitions
+      - `mcpBridgeClient.ts` - MCP Bridge Client implementation
+      - `llmClient.ts` - LLM Client implementation (to be implemented)
+      - `toolRegistry.ts` - Tool Registry implementation (to be implemented)
+      - `mcpBridge.ts` - MCP Bridge implementation (to be implemented)
+      - `mcpBridgeManager.ts` - MCP Bridge Manager implementation (to be implemented)
   - `test/` - Test code
     - `suite/` - Test suites
       - `mcp/` - MCP client tests
         - `mcpClient.test.ts` - Tests for MCP client
         - `mcpUtils.test.ts` - Tests for utility functions
+        - `bridge/` - MCP Bridge tests
+          - `vscodeLogger.test.ts` - Tests for VS Code Logger
+          - `mcpBridgeClient.test.ts` - Tests for MCP Bridge Client
+          - `llmClient.test.ts` - Tests for LLM Client (to be implemented)
+          - `toolRegistry.test.ts` - Tests for Tool Registry (to be implemented)
+          - `mcpBridge.test.ts` - Tests for MCP Bridge (to be implemented)
+          - `mcpBridgeManager.test.ts` - Tests for MCP Bridge Manager (to be implemented)
     - `templates/` - Test templates
     - `setup.ts` - Test setup
     - `runTest.ts` - Test runner
@@ -88,9 +152,11 @@ The first feature to be implemented is an MCP (Model Context Protocol) client th
   - `CONTRIBUTING.md` - Contribution guidelines
   - `dev/` - Development documentation
     - `research/` - Research documents
+    - `green-code-test-pairs.md` - Documentation for GREEN code-test pairs identification
 - `scripts/` - Development scripts
   - `tdd.js` - TDD helper script
   - `create-test.js` - Test generator script
+  - `identify-green-pairs.js` - GREEN code-test pairs identification script
 - `.devcontainer/` - Development container configuration
 - `.github/` - GitHub workflows and templates
   - `workflows/` - GitHub Actions workflows
@@ -129,6 +195,21 @@ The project uses a dedicated DevContainer for development to ensure consistency 
 - **TEST-MCP-031**: Test that the client logs tool discovery attempts and results
 - **TEST-MCP-032**: Test that the client logs function calls and results
 - **TEST-MCP-033**: Test that the client logs errors with appropriate detail
+
+### MCP Bridge Test Plan
+- **TEST-LOGGER-001**: Test that the logger can be created with an output channel
+- **TEST-LOGGER-002**: Test that the logger logs messages at different levels
+- **TEST-LOGGER-003**: Test that the logger formats messages correctly
+- **TEST-LOGGER-004**: Test that the logger filters messages by level
+- **TEST-MCPCLIENT-001**: Test that the client can connect to an MCP server via local process
+- **TEST-MCPCLIENT-002**: Test that the client can connect to an MCP server via HTTP
+- **TEST-MCPCLIENT-003**: Test that the client can connect to an MCP server via Docker exec
+- **TEST-MCPCLIENT-004**: Test that the client can get available tools
+- **TEST-MCPCLIENT-005**: Test that the client can call a tool
+- **TEST-MCPCLIENT-006**: Test that the client handles connection errors gracefully
+- **TEST-MCPCLIENT-007**: Test that the client handles tool call errors gracefully
+- **TEST-MCPCLIENT-008**: Test that the client can close the connection
+- **TEST-MCPCLIENT-009**: Test that the client integrates with VS Code's output channel
 
 ## Documentation Requirements
 - README.md with project overview and setup instructions
