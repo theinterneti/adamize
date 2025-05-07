@@ -27,20 +27,23 @@ import axios from 'axios';
 import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpClient';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
-// We don't directly use childProcess but we need to reference it in comments
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as _childProcess from 'child_process';
-import networkConfig, { ServiceType } from '../../../utils/networkConfig';
+import { EventEmitter } from 'events';
+import networkConfig, { ServiceType, Environment } from '../../../utils/networkConfig';
+import processUtils from '../../../utils/processUtils';
 
 suite('Enhanced MCP Client Test Suite', () => {
   // Stubs
   let axiosGetStub: sinon.SinonStub;
   let axiosPostStub: sinon.SinonStub;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let execStub: sinon.SinonStub;
+  let executeCommandStub: sinon.SinonStub;
+  let spawnProcessStub: sinon.SinonStub;
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   let client: EnhancedMCPClient;
+  let localProcessClient: EnhancedMCPClient;
   let networkConfigStub: sinon.SinonStubbedInstance<typeof networkConfig>;
+
+  // Mock process objects
+  let mockProcess: EventEmitter;
 
   // Setup before each test
   setup(() => {
@@ -48,8 +51,23 @@ suite('Enhanced MCP Client Test Suite', () => {
     axiosGetStub = sinon.stub(axios, 'get');
     axiosPostStub = sinon.stub(axios, 'post');
 
-    // We can't directly stub child_process.exec because it's non-configurable
-    // Instead, we'll use a different approach for testing Docker exec functionality
+    // Create mock process for local process testing
+    mockProcess = new EventEmitter();
+    // Add stdout and stderr streams
+    mockProcess.stdout = new EventEmitter();
+    mockProcess.stderr = new EventEmitter();
+    // Add methods
+    mockProcess.kill = sinon.stub();
+
+    // Stub processUtils methods
+    executeCommandStub = sinon.stub(processUtils, 'executeCommand');
+    spawnProcessStub = sinon.stub(processUtils, 'spawnProcess').returns(mockProcess as any);
+
+    // Set up default return values
+    executeCommandStub.resolves({
+      stdout: 'mock-stdout',
+      stderr: ''
+    });
 
     // Create output channel stub
     outputChannelStub = {
@@ -58,7 +76,8 @@ suite('Enhanced MCP Client Test Suite', () => {
       clear: sinon.stub(),
       show: sinon.stub(),
       hide: sinon.stub(),
-      dispose: sinon.stub()
+      dispose: sinon.stub(),
+      name: 'Test Channel'
     };
 
     // Stub VS Code window.createOutputChannel
@@ -71,8 +90,9 @@ suite('Enhanced MCP Client Test Suite', () => {
     networkConfigStub.getServiceUrl.returns('http://localhost:8000');
     networkConfigStub.getCurrentEnvironment.returns('development');
 
-    // Create client instance
+    // Create client instances
     client = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.HTTP);
+    localProcessClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.LocalProcess);
   });
 
   // Teardown after each test
@@ -124,13 +144,119 @@ suite('Enhanced MCP Client Test Suite', () => {
     assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
 
-  // We'll skip Docker Exec tests since we can't easily stub child_process.exec
-  test.skip('connect() should return true when Docker container is available', async () => {
-    // This test is skipped because we can't easily stub child_process.exec
+  // Docker Exec connection tests
+  test('connect() should return true when Docker container is available', async () => {
+    // Arrange
+    // Create a client with Docker Exec connection method
+    networkConfigStub.getServiceUrl.returns('mcp-container');
+    networkConfigStub.getCurrentEnvironment.returns(Environment.Development);
+    const dockerClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.DockerExec);
+
+    // Manually set the containerName property
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (dockerClient as any).containerName = 'mcp-container';
+
+    // Reset the stub to ensure it's called fresh
+    executeCommandStub.reset();
+
+    // Set up the executeCommand stub to return a container ID
+    executeCommandStub.resolves({
+      stdout: 'container123',
+      stderr: ''
+    });
+
+    // Act
+    const result = await dockerClient.connect();
+
+    // Assert
+    assert.strictEqual(result, true);
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('docker ps'), 'Should call docker ps');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
 
-  test.skip('connect() should return false when Docker container is not available', async () => {
-    // This test is skipped because we can't easily stub child_process.exec
+  test('connect() should return false when Docker container is not available', async () => {
+    // Arrange
+    // Create a client with Docker Exec connection method
+    networkConfigStub.getServiceUrl.returns('mcp-container');
+    networkConfigStub.getCurrentEnvironment.returns(Environment.Development);
+    const dockerClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.DockerExec);
+
+    // Manually set the containerName property
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (dockerClient as any).containerName = 'mcp-container';
+
+    // Reset the stub to ensure it's called fresh
+    executeCommandStub.reset();
+
+    // Set up the executeCommand stub to return an empty result
+    executeCommandStub.resolves({
+      stdout: '',
+      stderr: ''
+    });
+
+    // Act
+    const result = await dockerClient.connect();
+
+    // Assert
+    assert.strictEqual(result, false);
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('docker ps'), 'Should call docker ps');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
+  });
+
+  // Local Process connection tests
+  test('connect() should return false when server URL is invalid for local process', async () => {
+    // Act
+    const result = await localProcessClient.connect();
+
+    // Assert
+    assert.strictEqual(result, false);
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
+  });
+
+  test('connect() should return true when server URL is a valid path', async () => {
+    // Arrange
+    // Create a client with Local Process connection method and a valid path
+    networkConfigStub.getServiceUrl.returns('/usr/local/bin/mcp-tool');
+    const localClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.LocalProcess);
+
+    // Set up the executeCommand stub to return success
+    executeCommandStub.resolves({
+      stdout: '-rwxr-xr-x 1 user user 12345 Jan 1 12:00 /usr/local/bin/mcp-tool',
+      stderr: ''
+    });
+
+    // Act
+    const result = await localClient.connect();
+
+    // Assert
+    assert.strictEqual(result, true);
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('ls -l'), 'Should check if file exists');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
+  });
+
+  test('connect() should return false when local process path check fails', async () => {
+    // Arrange
+    // Create a client with Local Process connection method and a valid path
+    networkConfigStub.getServiceUrl.returns('/usr/local/bin/mcp-tool');
+    const localClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.LocalProcess);
+
+    // Set up the executeCommand stub to return an error
+    executeCommandStub.resolves({
+      stdout: '',
+      stderr: 'No such file or directory'
+    });
+
+    // Act
+    const result = await localClient.connect();
+
+    // Assert
+    assert.strictEqual(result, false);
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('ls -l'), 'Should check if file exists');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
 
   // Function Call Tests - HTTP
@@ -159,9 +285,81 @@ suite('Enhanced MCP Client Test Suite', () => {
     assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
 
-  // We'll skip Docker Exec tests since we can't easily stub child_process.exec
-  test.skip('callFunction() should call function via Docker Exec and return result', async () => {
-    // This test is skipped because we can't easily stub child_process.exec
+  // Docker Exec function call tests
+  test('callFunction() should call function via Docker Exec and return result', async () => {
+    // Arrange
+    // Create a client with Docker Exec connection method
+    networkConfigStub.getServiceUrl.returns('mcp-container');
+    networkConfigStub.getCurrentEnvironment.returns(Environment.Development);
+    const dockerClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.DockerExec);
+
+    // Manually set the containerName and containerId properties
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (dockerClient as any).containerName = 'mcp-container';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (dockerClient as any).containerId = 'container123';
+
+    // Set up the executeCommand stub to return a JSON-RPC response
+    executeCommandStub.resolves({
+      stdout: JSON.stringify({ result: { data: 'test' } }),
+      stderr: ''
+    });
+
+    const functionName = 'testFunction';
+    const parameters = { param1: 'value1', param2: 'value2' };
+
+    // Act
+    const result = await dockerClient.callFunction(functionName, parameters);
+
+    // Assert
+    assert.strictEqual(result.status, 'success');
+    assert.deepStrictEqual(result.result, { data: 'test' });
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('docker exec'), 'Should call docker exec');
+    assert.ok(executeCommandStub.firstCall.args[0].includes(functionName), 'Should include function name');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
+  });
+
+  // Local Process function call tests
+  test('callFunction() should return error when server URL is invalid', async () => {
+    // Arrange
+    const functionName = 'testFunction';
+    const parameters = { param1: 'value1', param2: 'value2' };
+
+    // Act
+    const result = await localProcessClient.callFunction(functionName, parameters);
+
+    // Assert
+    assert.strictEqual(result.status, 'error');
+    assert.ok(result.error?.includes('Invalid server URL'), 'Error should mention invalid URL');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
+  });
+
+  test('callFunction() should call function via local process and return result', async () => {
+    // Arrange
+    // Create a client with Local Process connection method and a valid path
+    networkConfigStub.getServiceUrl.returns('/usr/local/bin/mcp-tool');
+    const localClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, ConnectionMethod.LocalProcess);
+
+    // Set up the executeCommand stub to return a JSON-RPC response
+    executeCommandStub.resolves({
+      stdout: JSON.stringify({ result: { data: 'test' } }),
+      stderr: ''
+    });
+
+    const functionName = 'testFunction';
+    const parameters = { param1: 'value1', param2: 'value2' };
+
+    // Act
+    const result = await localClient.callFunction(functionName, parameters);
+
+    // Assert
+    assert.strictEqual(result.status, 'success');
+    assert.deepStrictEqual(result.result, { data: 'test' });
+    assert.ok(executeCommandStub.called, 'executeCommand should be called');
+    assert.ok(executeCommandStub.firstCall.args[0].includes('echo'), 'Should use echo to pipe input');
+    assert.ok(executeCommandStub.firstCall.args[0].includes(functionName), 'Should include function name in JSON');
+    assert.strictEqual(outputChannelStub.appendLine.called, true);
   });
 
   // Error Handling Tests

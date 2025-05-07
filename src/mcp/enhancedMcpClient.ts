@@ -6,16 +6,12 @@
  */
 
 import axios from 'axios';
-import { exec } from 'child_process';
 import * as vscode from 'vscode';
-import { promisify } from 'util';
 import { IMCPFunctionCallResult } from './mcpTypes';
 // Commented out unused imports
 // import { validateParameters, formatParameters } from './mcpUtils';
 import networkConfig, { Environment, ServiceType } from '../utils/networkConfig';
-
-// Promisify exec
-const execPromise = promisify(exec);
+import processUtils from '../utils/processUtils';
 
 /**
  * Connection method for MCP
@@ -169,7 +165,7 @@ export class EnhancedMCPClient {
       }
 
       // Get container ID
-      const { stdout } = await execPromise(
+      const { stdout } = await processUtils.executeCommand(
         `docker ps --filter ancestor=${this.containerName} --format "{{.ID}}"`
       );
 
@@ -193,9 +189,30 @@ export class EnhancedMCPClient {
    * @returns True if connected successfully
    */
   private async connectLocalProcess(): Promise<boolean> {
-    // Not implemented yet
-    this.logError('Local process connection method is not implemented yet');
-    return false;
+    try {
+      this.logInfo('Connecting to MCP server via local process');
+
+      // Check if the server URL is a valid path
+      if (!this.serverUrl || this.serverUrl.includes('://')) {
+        this.logError('Invalid server URL for local process connection. Expected a path, got: ' + this.serverUrl);
+        return false;
+      }
+
+      // For local process, we don't need to establish a persistent connection
+      // We'll just verify that the path exists and is executable
+      const { stdout, stderr } = await processUtils.executeCommand(`ls -l ${this.serverUrl}`);
+
+      if (stderr) {
+        this.logError(`Error checking local process path: ${stderr}`);
+        return false;
+      }
+
+      this.logInfo(`Connected to MCP server via local process at ${this.serverUrl}`);
+      return true;
+    } catch (error) {
+      this.logError(`Error connecting to MCP server via local process: ${error}`);
+      return false;
+    }
   }
 
   /**
@@ -288,7 +305,7 @@ export class EnhancedMCPClient {
 
       // Call the tool using docker exec
       const cmd = `docker exec -i ${this.containerId} sh -c "echo '${requestJson}' | node dist/index.js"`;
-      const { stdout, stderr } = await execPromise(cmd);
+      const { stdout, stderr } = await processUtils.executeCommand(cmd);
 
       if (stderr) {
         this.logError(`Error from container:`, stderr);
@@ -316,14 +333,52 @@ export class EnhancedMCPClient {
    * @returns The function call result
    */
   private async callFunctionLocalProcess(
-    _functionName: string,
-    _parameters: Record<string, unknown>
+    functionName: string,
+    parameters: Record<string, unknown>
   ): Promise<IMCPFunctionCallResult> {
-    // Not implemented yet
-    this.logError('Local process connection method is not implemented yet');
-    return {
-      status: 'error',
-      error: 'Local process connection method is not implemented yet'
-    };
+    try {
+      this.logInfo(`Calling function ${functionName} via local process`);
+
+      // Check if the server URL is a valid path
+      if (!this.serverUrl || this.serverUrl.includes('://')) {
+        throw new Error(`Invalid server URL for local process connection. Expected a path, got: ${this.serverUrl}`);
+      }
+
+      // Create JSON-RPC request
+      const request = {
+        jsonrpc: '2.0',
+        id: this.requestId++,
+        method: functionName,
+        params: parameters
+      };
+
+      // Convert request to JSON
+      const requestJson = JSON.stringify(request);
+
+      // Call the tool using the local process
+      // We'll pipe the request to the process's stdin and read the response from stdout
+      const cmd = `echo '${requestJson}' | ${this.serverUrl}`;
+      const { stdout, stderr } = await processUtils.executeCommand(cmd);
+
+      if (stderr) {
+        this.logError(`Error from local process:`, stderr);
+      }
+
+      // Parse response
+      const response = JSON.parse(stdout);
+
+      this.logInfo(`Function ${functionName} called successfully via local process`);
+
+      return {
+        status: 'success',
+        result: response.result
+      };
+    } catch (error) {
+      this.logError(`Error calling function ${functionName} via local process: ${error}`);
+      return {
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
   }
 }
