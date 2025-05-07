@@ -25,14 +25,18 @@ import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import axios from 'axios';
 import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpClient';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
-import * as childProcess from 'child_process';
+// We don't directly use childProcess but we need to reference it in comments
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as _childProcess from 'child_process';
 import networkConfig, { ServiceType } from '../../../utils/networkConfig';
 
 suite('Enhanced MCP Client Test Suite', () => {
   // Stubs
   let axiosGetStub: sinon.SinonStub;
   let axiosPostStub: sinon.SinonStub;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let execStub: sinon.SinonStub;
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   let client: EnhancedMCPClient;
@@ -80,8 +84,11 @@ suite('Enhanced MCP Client Test Suite', () => {
   // Constructor Tests
   test('constructor should initialize with correct values', () => {
     // Assert
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     assert.strictEqual((client as any).serviceType, ServiceType.MCPNeo4jMemory);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     assert.strictEqual((client as any).connectionMethod, ConnectionMethod.HTTP);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     assert.strictEqual((client as any).serverUrl, 'http://localhost:8000');
     assert.strictEqual(outputChannelStub.show.called, true);
   });

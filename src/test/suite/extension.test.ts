@@ -25,6 +25,7 @@ suite('Extension Test Suite', () => {
 
   test('showWelcomeMessage should show message on first activation', () => {
     // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const extension = require('../../extension');
 
     // Create stubs
@@ -48,6 +49,7 @@ suite('Extension Test Suite', () => {
 
   test('showWelcomeMessage should not show message on subsequent activations', () => {
     // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const extension = require('../../extension');
 
     // Create stubs
@@ -70,6 +72,7 @@ suite('Extension Test Suite', () => {
 
   test('deactivate should log deactivation message', () => {
     // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const extension = require('../../extension');
 
     // Create stub

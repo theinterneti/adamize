@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpClient';
 import { EnhancedNeo4jMemoryClient } from '../../../memory/enhancedNeo4jMemoryClient';
 import { IMCPFunctionCallResult } from '../../../mcp/mcpTypes';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import networkConfig from '../../../utils/networkConfig';
 
 suite('Enhanced Neo4j Memory Client Test Suite', () => {
@@ -30,6 +31,7 @@ suite('Enhanced Neo4j Memory Client Test Suite', () => {
     };
 
     // Stub VS Code workspace.getConfiguration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sinon.stub(vscode.workspace, 'getConfiguration').returns(mockConfig as any);
 
     // Create a stubbed Enhanced MCP client

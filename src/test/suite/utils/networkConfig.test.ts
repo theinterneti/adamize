@@ -12,12 +12,15 @@ import networkConfig, { Environment, ServiceType } from '../../../utils/networkC
 suite('Network Configuration Test Suite', () => {
   // Stubs
   let processEnvStub: sinon.SinonStub;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let vsCodeConfigStub: sinon.SinonStub;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockConfig: any;
 
   // Setup before each test
   setup(() => {
     // Save original process.env
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const originalEnv = process.env;
 
     // Stub process.env
@@ -29,6 +32,7 @@ suite('Network Configuration Test Suite', () => {
     };
 
     // Stub VS Code workspace.getConfiguration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vsCodeConfigStub = sinon.stub(vscode.workspace, 'getConfiguration').returns(mockConfig as any);
   });
 
