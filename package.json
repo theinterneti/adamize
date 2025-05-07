@@ -43,7 +43,7 @@
           "default": "http://localhost:8001",
           "description": "Neo4j MCP server URL"
         },
-        "adamize.mcp.connectionMethod": {
+        "adamize.connectionMethod": {
           "type": "string",
           "enum": [
             "http",
@@ -163,6 +163,11 @@
       {
         "command": "adamize.searchMemory",
         "title": "Search Memory",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.selectConnectionMethod",
+        "title": "Select MCP Connection Method",
         "category": "Adamize"
       }
     ]
