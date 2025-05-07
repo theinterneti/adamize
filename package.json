@@ -43,7 +43,7 @@
           "default": "http://localhost:8001",
           "description": "Neo4j MCP server URL"
         },
-        "adamize.mcp.connectionMethod": {
+        "adamize.connectionMethod": {
           "type": "string",
           "enum": [
             "http",
@@ -164,6 +164,11 @@
         "command": "adamize.searchMemory",
         "title": "Search Memory",
         "category": "Adamize"
+      },
+      {
+        "command": "adamize.selectConnectionMethod",
+        "title": "Select MCP Connection Method",
+        "category": "Adamize"
       }
     ]
   },
@@ -190,10 +195,13 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --ext ts --fix",
     "precommit": "lint-staged",
+    "prepare": "husky install",
     "package": "@vscode/vsce package",
     "publish": "@vscode/vsce publish"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.17.43",
@@ -202,18 +210,20 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^2.15.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "glob": "^10.3.10",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^15.5.2",
     "mocha": "^10.3.0",
     "nodemon": "^3.1.0",
     "nyc": "^15.1.0",
     "prettier": "^3.2.5",
     "sinon": "^17.0.1",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.4.5",
-    "@vscode/vsce": "^2.15.0"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "axios": "^1.6.8",

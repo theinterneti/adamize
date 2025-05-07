@@ -1,14 +1,14 @@
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/mcpClient';
-// import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
+import { EnhancedMCPClient, ConnectionMethod } from './mcp/enhancedMcpClient';
 import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
-// let _enhancedMcpClient: EnhancedMCPClient | undefined;
+let enhancedMcpClient: EnhancedMCPClient | undefined;
 let memoryClient: Neo4jMemoryClient | undefined;
 let enhancedMemoryClient: EnhancedNeo4jMemoryClient | undefined;
 
@@ -29,18 +29,40 @@ export function activate(context: vscode.ExtensionContext) {
       const env = networkConfig.getCurrentEnvironment();
       console.info(`Current environment: ${env}`);
 
+      // Determine connection method
+      let connectionMethod: ConnectionMethod | undefined;
+
+      // Check if connection method is specified in settings
+      const configConnectionMethod = vscode.workspace.getConfiguration('adamize').get<string>('connectionMethod');
+      if (configConnectionMethod) {
+        switch (configConnectionMethod.toLowerCase()) {
+          case 'http':
+            connectionMethod = ConnectionMethod.HTTP;
+            break;
+          case 'docker-exec':
+            connectionMethod = ConnectionMethod.DockerExec;
+            break;
+          case 'local-process':
+            connectionMethod = ConnectionMethod.LocalProcess;
+            break;
+        }
+      }
+
       if (env === Environment.Development) {
         // In development, use the enhanced clients
         console.info('Using enhanced clients for development environment');
 
-        // Create and connect enhanced memory client
-        enhancedMemoryClient = new EnhancedNeo4jMemoryClient();
-        const connected = await enhancedMemoryClient.connect();
+        // Create enhanced MCP client
+        enhancedMcpClient = new EnhancedMCPClient(ServiceType.MCPNeo4jMemory, connectionMethod);
+        const connected = await enhancedMcpClient.connect();
 
         if (connected) {
-          vscode.window.showInformationMessage('Connected to Neo4j Memory MCP server');
+          vscode.window.showInformationMessage('Connected to MCP server');
+
+          // Create enhanced memory client
+          enhancedMemoryClient = new EnhancedNeo4jMemoryClient();
         } else {
-          vscode.window.showErrorMessage('Failed to connect to Neo4j Memory MCP server');
+          vscode.window.showErrorMessage('Failed to connect to MCP server');
           return;
         }
       } else {
@@ -78,15 +100,24 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   const listMCPToolsCommand = vscode.commands.registerCommand('adamize.listMCPTools', async () => {
-    if (!mcpClient) {
+    if (!mcpClient && !enhancedMcpClient) {
       vscode.window.showErrorMessage('Not connected to MCP server. Please connect first.');
       return;
     }
 
     vscode.window.showInformationMessage('Listing MCP tools...');
 
-    // Get available tools
-    const tools = await mcpClient.getTools();
+    // Get available tools using the appropriate client
+    let tools: string[] = [];
+    if (enhancedMcpClient) {
+      // For enhanced client, we need to call the function directly
+      const result = await enhancedMcpClient.callFunction('getTools', {});
+      if (result.status === 'success' && Array.isArray(result.result)) {
+        tools = result.result as string[];
+      }
+    } else if (mcpClient) {
+      tools = await mcpClient.getTools();
+    }
 
     if (tools.length > 0) {
       vscode.window.showInformationMessage(`Found ${tools.length} tools: ${tools.join(', ')}`);
@@ -168,6 +199,44 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const selectConnectionMethodCommand = vscode.commands.registerCommand(
+    'adamize.selectConnectionMethod',
+    async () => {
+      const options = [
+        { label: 'HTTP', description: 'Connect via HTTP' },
+        { label: 'Docker Exec', description: 'Connect via Docker exec' },
+        { label: 'Local Process', description: 'Connect via local process' }
+      ];
+
+      const selection = await vscode.window.showQuickPick(options, {
+        placeHolder: 'Select MCP connection method'
+      });
+
+      if (!selection) {
+        return;
+      }
+
+      let method: string;
+      switch (selection.label) {
+        case 'HTTP':
+          method = 'http';
+          break;
+        case 'Docker Exec':
+          method = 'docker-exec';
+          break;
+        case 'Local Process':
+          method = 'local-process';
+          break;
+        default:
+          method = 'http';
+      }
+
+      // Update configuration
+      await vscode.workspace.getConfiguration('adamize').update('connectionMethod', method, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(`Connection method set to ${selection.label}`);
+    }
+  );
+
   // Add commands to subscriptions
   context.subscriptions.push(showWelcomeCommand);
   context.subscriptions.push(connectMCPCommand);
@@ -175,6 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(searchMemoryCommand);
   context.subscriptions.push(runTestsCommand);
   context.subscriptions.push(runTestsWithCoverageCommand);
+  context.subscriptions.push(selectConnectionMethodCommand);
 
   // Show welcome message on first activation
   showWelcomeMessage(context);
