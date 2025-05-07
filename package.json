@@ -20,7 +20,11 @@
       "properties": {
         "adamize.environment": {
           "type": "string",
-          "enum": ["development", "testing", "production"],
+          "enum": [
+            "development",
+            "testing",
+            "production"
+          ],
           "default": "development",
           "description": "Environment type (development, testing, production)"
         },
@@ -41,7 +45,12 @@
         },
         "adamize.mcp.connectionMethod": {
           "type": "string",
-          "enum": ["http", "docker-exec", "local-process", "auto"],
+          "enum": [
+            "http",
+            "docker-exec",
+            "local-process",
+            "auto"
+          ],
           "default": "auto",
           "description": "MCP connection method (http, docker-exec, local-process, auto)"
         },
@@ -177,8 +186,8 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --ext ts --fix",
     "precommit": "lint-staged",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "@vscode/vsce package",
+    "publish": "@vscode/vsce publish"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -200,7 +209,7 @@
     "sinon": "^17.0.1",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.5",
-    "vsce": "^2.15.0"
+    "@vscode/vsce": "^2.15.0"
   },
   "dependencies": {
     "axios": "^1.6.8",

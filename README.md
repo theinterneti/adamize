@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/theinterneti/adamize/actions/workflows/ci.yml/badge.svg)](https://github.com/theinterneti/adamize/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/theinterneti/adamize/branch/main/graph/badge.svg?token=ADAMIZE_CODECOV_API)](https://codecov.io/gh/theinterneti/adamize)
 
 A VS Code extension for AI-assisted development with a focus on test-driven development and DevOps best practices.
 
