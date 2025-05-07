@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:18
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:20
 
 # Install additional tools
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
