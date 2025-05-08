@@ -8,12 +8,10 @@
  * @requirement REQ-MCP-053 Generate example arguments for tool schemas
  */
 
-import { strict as assert } from 'assert';
-import { describe, it } from 'mocha';
 import * as vscode from 'vscode';
+import { expect } from '@jest/globals';
 
 // Import the component we'll be testing
-// This will be implemented after forking and adapting the ollama-mcp-bridge repository
 import { MCPToolRegistry } from '../../../mcp/mcpToolRegistry';
 import { MCPTool } from '../../../mcp/mcpTypes';
 
@@ -21,7 +19,7 @@ describe('MCP Tool Registry', () => {
     /**
      * @test TEST-MCP-050 Test that tools can be registered with metadata
      */
-    it('should register tools with metadata', () => {
+    test('should register tools with metadata', () => {
         // Create a mock output channel
         const outputChannel = {
             appendLine: () => {},
@@ -55,14 +53,14 @@ describe('MCP Tool Registry', () => {
 
         // Check that the tool was registered
         const allTools = registry.getAllTools();
-        assert.strictEqual(allTools.length, 1);
-        assert.strictEqual(allTools[0].name, 'test-tool');
+        expect(allTools.length).toBe(1);
+        expect(allTools[0].name).toBe('test-tool');
     });
 
     /**
      * @test TEST-MCP-051 Test that tools can be unregistered
      */
-    it('should unregister tools', () => {
+    test('should unregister tools', () => {
         // Create a mock output channel
         const outputChannel = {
             appendLine: () => {},
@@ -98,13 +96,13 @@ describe('MCP Tool Registry', () => {
 
         // Check that the tool was unregistered
         const allTools = registry.getAllTools();
-        assert.strictEqual(allTools.length, 0);
+        expect(allTools.length).toBe(0);
     });
 
     /**
      * @test TEST-MCP-052 Test that tool instructions can be generated
      */
-    it('should generate tool instructions', () => {
+    test('should generate tool instructions', () => {
         // Create a mock output channel
         const outputChannel = {
             appendLine: () => {},
@@ -140,22 +138,23 @@ describe('MCP Tool Registry', () => {
         const instructions = registry.getToolInstructions();
 
         // Check that the instructions contain the tool name
-        assert.strictEqual(instructions!.includes('test-tool'), true);
+        expect(instructions).toBeDefined();
+        expect(instructions!.includes('test-tool')).toBe(true);
 
         // Check that the instructions contain the function name
-        assert.strictEqual(instructions!.includes('testFunction'), true);
+        expect(instructions!.includes('testFunction')).toBe(true);
 
         // Check that the instructions contain the parameter
-        assert.strictEqual(instructions!.includes('testParam'), true);
+        expect(instructions!.includes('testParam')).toBe(true);
 
         // Check that the instructions include the JSON format
-        assert.strictEqual(instructions!.includes('json'), true);
+        expect(instructions!.includes('json')).toBe(true);
     });
 
     /**
      * @test TEST-MCP-053 Test that example arguments can be generated for functions
      */
-    it('should generate example arguments for functions', () => {
+    test('should generate example arguments for functions', () => {
         // Create a mock output channel
         const outputChannel = {
             appendLine: () => {},
@@ -217,13 +216,129 @@ describe('MCP Tool Registry', () => {
         const exampleArgs = registry.generateExampleArgs('complex-tool', 'complexFunction');
 
         // Check that the example arguments contain all parameter types
-        assert.strictEqual(exampleArgs !== undefined, true);
+        expect(exampleArgs).toBeDefined();
         if (exampleArgs) {
-            assert.strictEqual(typeof exampleArgs.stringParam, 'string');
-            assert.strictEqual(typeof exampleArgs.numberParam, 'number');
-            assert.strictEqual(typeof exampleArgs.booleanParam, 'boolean');
-            assert.strictEqual(typeof exampleArgs.objectParam, 'object');
-            assert.strictEqual(Array.isArray(exampleArgs.arrayParam), true);
+            expect(typeof exampleArgs.stringParam).toBe('string');
+            expect(typeof exampleArgs.numberParam).toBe('number');
+            expect(typeof exampleArgs.booleanParam).toBe('boolean');
+            expect(typeof exampleArgs.objectParam).toBe('object');
+            expect(Array.isArray(exampleArgs.arrayParam)).toBe(true);
         }
+    });
+
+    /**
+     * @test TEST-MCP-051 Test that appropriate tools can be detected from user prompts
+     */
+    test('should detect appropriate tools from user prompts', () => {
+        // Create a mock output channel
+        const outputChannel = {
+            appendLine: () => {},
+            show: () => {}
+        } as unknown as vscode.OutputChannel;
+
+        const registry = new MCPToolRegistry(outputChannel);
+
+        // Register tools with metadata
+        const searchTool: MCPTool = {
+            name: 'search-tool',
+            description: 'A tool for searching',
+            schema: {
+                name: 'search-tool',
+                description: 'A tool for searching',
+                version: '1.0.0',
+                functions: [{
+                    name: 'search',
+                    description: 'Search for something',
+                    parameters: [{
+                        name: 'query',
+                        description: 'Search query',
+                        type: 'string',
+                        required: true
+                    }],
+                    returnType: 'object'
+                }]
+            },
+            execute: async () => 'Test result'
+        };
+
+        const weatherTool: MCPTool = {
+            name: 'weather-tool',
+            description: 'A tool for getting weather information',
+            schema: {
+                name: 'weather-tool',
+                description: 'A tool for getting weather information',
+                version: '1.0.0',
+                functions: [{
+                    name: 'getWeather',
+                    description: 'Get weather for a location',
+                    parameters: [{
+                        name: 'location',
+                        description: 'Location',
+                        type: 'string',
+                        required: true
+                    }],
+                    returnType: 'object'
+                }]
+            },
+            execute: async () => 'Test result'
+        };
+
+        const calculatorTool: MCPTool = {
+            name: 'calculator-tool',
+            description: 'A tool for performing calculations',
+            schema: {
+                name: 'calculator-tool',
+                description: 'A tool for performing calculations',
+                version: '1.0.0',
+                functions: [{
+                    name: 'calculate',
+                    description: 'Perform a calculation',
+                    parameters: [{
+                        name: 'expression',
+                        description: 'Math expression',
+                        type: 'string',
+                        required: true
+                    }],
+                    returnType: 'number'
+                }]
+            },
+            execute: async () => 'Test result'
+        };
+
+        // Register tools with custom metadata
+        registry.registerTool(searchTool, {
+            keywords: ['search', 'find', 'lookup', 'query'],
+            priority: 1
+        });
+
+        registry.registerTool(weatherTool, {
+            keywords: ['weather', 'temperature', 'forecast', 'rain', 'snow'],
+            priority: 1
+        });
+
+        registry.registerTool(calculatorTool, {
+            keywords: ['calculate', 'math', 'computation', 'formula'],
+            priority: 1
+        });
+
+        // Test detection with different prompts
+        const searchPrompt = "Can you search for information about climate change?";
+        const weatherPrompt = "What's the weather like in New York today?";
+        const calculatorPrompt = "Calculate the square root of 144";
+        const mixedPrompt = "I need to find the weather forecast and calculate the average temperature";
+
+        // Check that the correct tools are detected
+        const searchTools = registry.detectToolsForPrompt(searchPrompt);
+        expect(searchTools).toContain('search-tool');
+
+        const weatherTools = registry.detectToolsForPrompt(weatherPrompt);
+        expect(weatherTools).toContain('weather-tool');
+
+        const calculatorTools = registry.detectToolsForPrompt(calculatorPrompt);
+        expect(calculatorTools).toContain('calculator-tool');
+
+        const mixedTools = registry.detectToolsForPrompt(mixedPrompt);
+        expect(mixedTools).toContain('weather-tool');
+        expect(mixedTools.length).toBeGreaterThanOrEqual(1);
     });
 });

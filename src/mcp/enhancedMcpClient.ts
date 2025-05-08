@@ -51,10 +51,8 @@ export class EnhancedMCPClient {
     this.connectionMethod = connectionMethod || this.detectConnectionMethod();
     this.outputChannel = vscode.window.createOutputChannel(`Adamize MCP Client: ${serviceType}`);
 
-    // Show output channel in development environment
-    if (networkConfig.getCurrentEnvironment() === Environment.Development) {
-      this.outputChannel.show();
-    }
+    // Always show output channel
+    this.outputChannel.show();
 
     this.logDebug(`Created client for ${serviceType} using ${this.connectionMethod} method`);
     this.logDebug(`Server URL/Container: ${this.serverUrl}`);

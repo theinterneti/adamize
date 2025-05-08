@@ -8,13 +8,11 @@
  * @requirement REQ-MCP-063 Support multiple LLM providers
  */
 
-import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
-import { afterEach, beforeEach, describe, it } from 'mocha';
+import { expect, jest, describe, test, beforeEach, afterEach } from '@jest/globals';
 import * as vscode from 'vscode';
 
 // Import the component we'll be testing
-// This will be implemented after forking and adapting the ollama-mcp-bridge repository
 import { LLMClient } from '../../../mcp/llmClient';
 import { MCPToolRegistry } from '../../../mcp/mcpToolRegistry';
 import { MCPTool } from '../../../mcp/mcpTypes';
@@ -107,7 +105,7 @@ describe('LLM Client', () => {
     /**
      * @test TEST-MCP-060 Test that the client can connect to local LLM providers
      */
-    it('should send a prompt to the LLM', async () => {
+    test('should send a prompt to the LLM', async () => {
         // Set up the fetch stub to return a successful response
         (global.fetch as sinon.SinonStub).resolves({
             ok: true,
@@ -139,14 +137,14 @@ describe('LLM Client', () => {
         const response = await client.sendPrompt('Hello, world!');
 
         // Check that the response is correct
-        assert.strictEqual(response, 'Test response');
-        assert.strictEqual((global.fetch as sinon.SinonStub).calledOnce, true);
+        expect(response).toBe('Test response');
+        expect((global.fetch as sinon.SinonStub).calledOnce).toBe(true);
     });
 
     /**
      * @test TEST-MCP-061 Test that the client can format prompts for LLM consumption
      */
-    it('should format prompts with tool instructions', async () => {
+    test('should format prompts with tool instructions', async () => {
         // Set up the fetch stub to return a successful response
         (global.fetch as sinon.SinonStub).resolves({
             ok: true,
@@ -182,31 +180,29 @@ describe('LLM Client', () => {
         const requestBody = JSON.parse(fetchCall.args[1].body);
 
         // Check that the system prompt is included
-        assert.strictEqual(requestBody.messages[0].role, 'system');
-        assert.strictEqual(requestBody.messages[0].content.includes('You are a helpful assistant'), true);
+        expect(requestBody.messages[0].role).toBe('system');
+        expect(requestBody.messages[0].content.includes('You are a helpful assistant')).toBe(true);
 
         // Check that the user prompt is included
-        assert.strictEqual(requestBody.messages[1].role, 'user');
-        assert.strictEqual(requestBody.messages[1].content.includes('Hello, world!'), true);
+        expect(requestBody.messages[1].role).toBe('user');
+        expect(requestBody.messages[1].content.includes('Hello, world!')).toBe(true);
     });
 
     /**
      * @test TEST-MCP-062 Test that the client handles errors properly
      */
-    it('should handle errors properly', async () => {
+    test('should handle errors properly', async () => {
         // Set up the fetch stub to return an error
         (global.fetch as sinon.SinonStub).rejects(new Error('Network error'));
 
         // Send a prompt and expect it to throw
-        await assert.rejects(async () => {
-            await client.sendPrompt('Hello, world!');
-        }, /Network error/);
+        await expect(client.sendPrompt('Hello, world!')).rejects.toThrow('Network error');
     });
 
     /**
      * @test TEST-MCP-063 Test that the client can use different endpoints
      */
-    it('should use the specified endpoint', async () => {
+    test('should use the specified endpoint', async () => {
         // Create a client with a different endpoint
         const outputChannel = {
             appendLine: sinon.stub(),
@@ -254,6 +250,6 @@ describe('LLM Client', () => {
 
         // Check that the fetch was called with the correct URL
         const fetchCall = (global.fetch as sinon.SinonStub).getCall(0);
-        assert.strictEqual(fetchCall.args[0], 'http://localhost:8080/v1/chat/completions');
+        expect(fetchCall.args[0]).toBe('http://localhost:8080/v1/chat/completions');
     });
 });

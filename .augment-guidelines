@@ -4,13 +4,23 @@
 Adamize is a VS Code extension project focused on creating a development assistant similar to Augment Code but with specific differences and improvements. The project follows a test-driven development approach with a strong emphasis on DevOps best practices and integrates with local LLMs through the Model Context Protocol (MCP).
 
 ## Development Workflow
-This project follows a strict test-driven development workflow:
+This project follows a STRICT test-driven development workflow. You MUST follow these steps in order:
 
-1. Define requirements and acceptance criteria with clear requirement tags
-2. Write tests that validate the requirements with corresponding test tags
-3. Implement code to pass the tests with implementation tags
-4. Refactor while maintaining test coverage
-5. Document the implementation
+1. Define requirements and acceptance criteria with clear requirement tags (REQ-XXX-YYY)
+2. ALWAYS write tests BEFORE implementation code - tests MUST validate the requirements with corresponding test tags (TEST-XXX-YYY)
+3. Run the tests to verify they FAIL (Red phase)
+4. ONLY THEN implement code to pass the tests with implementation tags (IMPL-XXX-YYY)
+5. Run the tests to verify they PASS (Green phase)
+6. Refactor while maintaining test coverage
+7. Document the implementation
+
+### CRITICAL TDD RULES
+- You MUST NEVER write implementation code without a failing test first
+- You MUST NEVER create a new file without its corresponding test file
+- You MUST ALWAYS run tests after making changes to verify they pass
+- You MUST use the tagging system to maintain traceability between requirements, tests, and implementation
+- You MUST commit code ONLY after tests are passing (Green phase)
+- You MUST use the GREEN code-test pairs identification tools for staging and committing
 
 ### TDD Workflow Commands
 - `npm run tdd` - Watch for changes and run tests automatically
