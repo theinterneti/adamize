@@ -1,3 +1,4 @@
+# Development folders
 .vscode/**
 .vscode-test/**
 .github/**
@@ -10,15 +11,88 @@ ollama-mcp-bridge/**
 src/**
 scripts/**
 docs/**
+reference/**
+.augment-adam/**
+augment-adam/**
+out/**
+
+# Configuration files
 **/tsconfig.json
 **/tsconfig.eslint.json
 **/.eslintrc.json
-**/*.map
-**/*.ts
-**/*.tsbuildinfo
+**/.prettierrc
+**/.prettierignore
+**/.editorconfig
 .gitignore
 .lintstagedrc.js
 jest.config.js
 renovate.json
 typedoc.json
 install.sh
+.eslintignore
+.eslintrc.js
+.npmrc
+.nvmrc
+.yarnrc
+.travis.yml
+.codecov.yml
+.nycrc
+.mocharc.json
+.huskyrc
+.commitlintrc.json
+webpack.config.js
+
+# Source maps and TypeScript files
+**/*.map
+**/*.ts
+**/*.tsbuildinfo
+
+# Include only necessary node modules
+node_modules/**
+!node_modules/axios/dist/**
+!node_modules/uuid/dist/**
+!node_modules/chokidar/lib/**
+!node_modules/cytoscape/dist/**
+!node_modules/cytoscape-cola/cytoscape-cola.js
+!node_modules/cytoscape-context-menus/cytoscape-context-menus.js
+!node_modules/cytoscape-context-menus/style.css
+!node_modules/cytoscape-dagre/cytoscape-dagre.js
+!node_modules/cytoscape-navigator/cytoscape-navigator.js
+!node_modules/cytoscape-navigator/style.css
+!node_modules/cytoscape-popper/cytoscape-popper.js
+!node_modules/eventsource/lib/**
+
+# Exclude unnecessary files from included node_modules
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/*.md
+node_modules/**/*.ts
+node_modules/**/*.map
+node_modules/**/LICENSE
+node_modules/**/CHANGELOG.md
+node_modules/**/README.md
+node_modules/**/package.json
+node_modules/**/.npmignore
+node_modules/**/.travis.yml
+node_modules/**/docs/**
+node_modules/**/example/**
+node_modules/**/examples/**
+
+# Test files
+**/test/**
+**/*.test.js
+**/*.spec.js
+**/*.test.ts
+**/*.spec.ts
+**/tests/**
+
+# Misc files
+**/.DS_Store
+**/.git
+**/.github
+**/thumbs.db
+**/*.log
+**/*.vsix
+.gitattributes
+CONTRIBUTING.md
+CHANGELOG.md
