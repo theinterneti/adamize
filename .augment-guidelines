@@ -143,6 +143,10 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
       - `toolRegistry.ts` - Tool Registry implementation (to be implemented)
       - `mcpBridge.ts` - MCP Bridge implementation (to be implemented)
       - `mcpBridgeManager.ts` - MCP Bridge Manager implementation (to be implemented)
+  - `ui/` - User interface components
+    - `memoryGraphView.ts` - Memory graph visualization using Cytoscape.js
+    - `mcpChatView.ts` - Chat interface for interacting with LLMs through MCP
+    - `mcpServerExplorerView.ts` - VS Code sidebar view for managing MCP servers
   - `test/` - Test code
     - `suite/` - Test suites
       - `mcp/` - MCP client tests
@@ -155,6 +159,10 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
           - `toolRegistry.test.ts` - Tests for Tool Registry (to be implemented)
           - `mcpBridge.test.ts` - Tests for MCP Bridge (to be implemented)
           - `mcpBridgeManager.test.ts` - Tests for MCP Bridge Manager (to be implemented)
+      - `ui/` - UI component tests
+        - `memoryGraphView.test.ts` - Tests for memory graph visualization
+        - `mcpChatView.test.ts` - Tests for MCP chat interface
+        - `mcpServerExplorerView.test.ts` - Tests for MCP server explorer
     - `templates/` - Test templates
     - `setup.ts` - Test setup
     - `runTest.ts` - Test runner
@@ -220,6 +228,55 @@ The project uses a dedicated DevContainer for development to ensure consistency 
 - **TEST-MCPCLIENT-007**: Test that the client handles tool call errors gracefully
 - **TEST-MCPCLIENT-008**: Test that the client can close the connection
 - **TEST-MCPCLIENT-009**: Test that the client integrates with VS Code's output channel
+
+## UI Components
+The project includes several UI components for interacting with MCP servers and visualizing data:
+
+### MemoryGraphView
+- **Purpose**: Visualizes the memory graph using Cytoscape.js
+- **Features**:
+  - Interactive graph visualization
+  - Node and edge manipulation
+  - Search functionality
+  - Context menus for actions
+- **Status**: Partially implemented, has TypeScript errors preventing compilation
+
+### MCPChatView
+- **Purpose**: Provides a chat interface for interacting with LLMs through MCP servers
+- **Features**:
+  - Send messages to LLMs
+  - Display responses
+  - Show tool executions in the chat
+  - Maintain conversation history
+  - Clear conversations
+  - Select different MCP servers
+- **Status**: Partially implemented, has TypeScript errors preventing compilation
+
+### MCPServerExplorerView
+- **Purpose**: Manages MCP servers in the VS Code sidebar
+- **Features**:
+  - List available MCP servers
+  - Start/stop servers
+  - Add new servers
+  - View server details
+  - View available tools
+  - View tool details
+- **Status**: Partially implemented, has TypeScript errors preventing compilation
+
+### UI Components Development Status
+- 176 TypeScript errors across 19 files prevent successful compilation
+- Many errors are in test files, but some are in the actual UI implementation files
+- The errors include unused variables, type mismatches, and test-related issues
+- The UI components are partially implemented but not fully functional
+- The extension cannot be packaged into a VSIX file due to the compilation errors
+
+### Next Steps for UI Components
+1. Fix TypeScript errors in the codebase
+2. Complete the implementation of the UI components
+3. Fix the test files to properly test the UI components
+4. Successfully compile the project
+5. Package the extension into a VSIX file
+6. Install the VSIX file in VS Code
 
 ## Documentation Requirements
 - README.md with project overview and setup instructions

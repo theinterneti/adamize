@@ -31,7 +31,8 @@ import * as vscode from 'vscode';
 
 suite('Your Test Suite Name', () => {
   // Declare stubs and mocks at the suite level
-  let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let outputChannelStub: any;
   // let yourClassStub: sinon.SinonStubbedInstance<YourClass>;
 
   // Test setup - runs before each test
@@ -44,11 +45,10 @@ suite('Your Test Suite Name', () => {
       appendLine: sinon.stub(),
       append: sinon.stub(),
       clear: sinon.stub(),
-      show: sinon.stub() as unknown as sinon.SinonStub & ((preserveFocus?: boolean) => void),
+      show: sinon.stub(),
       hide: sinon.stub(),
       dispose: sinon.stub(),
-      name: 'Test Channel',
-      // Add any other methods you need to stub
+      name: 'Test Channel'
     };
 
     // Stub VS Code window.createOutputChannel

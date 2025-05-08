@@ -21,10 +21,11 @@ import axios from 'axios';
 import { MCPBridgeClient } from '../../../../mcp/bridge/mcpBridgeClient';
 import { ConnectionMethod, MCPServerConfig } from '../../../../mcp/bridge/bridgeTypes';
 import { VSCodeLogger } from '../../../../mcp/bridge/vscodeLogger';
+import { createOutputChannelStub } from '../../../helpers/testHelpers';
 
 // Mock child_process.exec
 jest.mock('child_process', () => ({
-  exec: jest.fn((command, options, callback) => {
+  exec: jest.fn((_command, options, callback) => {
     // Handle both forms of exec call
     const cb = typeof options === 'function' ? options : callback;
     if (typeof cb === 'function') {
@@ -39,7 +40,7 @@ jest.mock('util', () => {
   const originalUtil = jest.requireActual('util');
   return {
     ...originalUtil,
-    promisify: jest.fn().mockImplementation((fn) => {
+    promisify: jest.fn().mockImplementation((_fn) => {
       return jest.fn().mockResolvedValue({ stdout: '{"jsonrpc": "2.0", "result": {"status": "connected"}}', stderr: '' });
     })
   };
@@ -48,30 +49,20 @@ jest.mock('util', () => {
 suite('MCP Bridge Client Tests', () => {
   let outputChannelStub: sinon.SinonStubbedInstance<vscode.OutputChannel>;
   let logger: VSCodeLogger;
-  let axiosGetStub: sinon.SinonStub;
+  // We only use axiosPostStub in the tests
   let axiosPostStub: sinon.SinonStub;
-  const childProcess = require('child_process');
 
   setup(() => {
     // Set NODE_ENV to test
     process.env.NODE_ENV = 'test';
 
     // Create a stub for the VS Code output channel
-    outputChannelStub = {
-      name: 'Test Channel',
-      append: sinon.stub(),
-      appendLine: sinon.stub(),
-      clear: sinon.stub(),
-      show: sinon.stub(),
-      hide: sinon.stub(),
-      dispose: sinon.stub(),
-    };
+    outputChannelStub = createOutputChannelStub();
 
     // Create a logger
     logger = new VSCodeLogger(outputChannelStub as unknown as vscode.OutputChannel);
 
-    // Stub axios methods
-    axiosGetStub = sinon.stub(axios, 'get');
+    // Stub axios post method (we only use post in the tests)
     axiosPostStub = sinon.stub(axios, 'post');
 
     // Reset mocks

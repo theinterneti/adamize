@@ -14,19 +14,23 @@ import * as vscode from 'vscode';
 
 // Import the components we'll be testing
 import { MCPBridgeManager } from '../../../../mcp/mcpBridgeManager';
-import { MCPBridge, MCPBridgeOptions, MCPBridgeEventType } from '../../../../mcp/mcpBridge';
+import { MCPBridge } from '../../../../mcp/mcpBridge';
 import { LLMProvider } from '../../../../mcp/llmClient';
-import { MCPTool } from '../../../../mcp/mcpTypes';
 
 // Mock the MCPBridge class
 jest.mock('../../../../mcp/mcpBridge');
 
 // Mock vscode commands
-vscode.commands = {
+// We can't directly assign to vscode.commands because it's read-only
+// Instead, we'll use a type assertion to bypass TypeScript's readonly check
+// This is only for testing purposes
+const mockCommands = {
     registerCommand: jest.fn().mockReturnValue({
         dispose: jest.fn()
     })
-} as any;
+};
+// Use Object.defineProperty to override the commands property
+Object.defineProperty(vscode, 'commands', { value: mockCommands });
 
 describe('MCP Bridge Manager', () => {
     let manager: MCPBridgeManager;
@@ -51,17 +55,17 @@ describe('MCP Bridge Manager', () => {
             subscriptions: [],
             extensionPath: '/test/path',
             globalState: {
-                get: jest.fn().mockImplementation((key, defaultValue) => defaultValue),
-                update: jest.fn().mockResolvedValue(undefined)
+                get: jest.fn().mockImplementation((_key, defaultValue) => defaultValue),
+                update: jest.fn().mockImplementation(async () => {})
             } as unknown as vscode.Memento,
             workspaceState: {
-                get: jest.fn().mockImplementation((key, defaultValue) => defaultValue),
-                update: jest.fn().mockResolvedValue(undefined)
+                get: jest.fn().mockImplementation((_key, defaultValue) => defaultValue),
+                update: jest.fn().mockImplementation(async () => {})
             } as unknown as vscode.Memento,
             secrets: {
-                get: jest.fn().mockResolvedValue(undefined),
-                store: jest.fn().mockResolvedValue(undefined),
-                delete: jest.fn().mockResolvedValue(undefined)
+                get: jest.fn().mockImplementation(async () => null),
+                store: jest.fn().mockImplementation(async () => {}),
+                delete: jest.fn().mockImplementation(async () => {})
             },
             extensionUri: vscode.Uri.file('/test/path')
         } as unknown as vscode.ExtensionContext;
@@ -73,7 +77,7 @@ describe('MCP Bridge Manager', () => {
             registerTool: jest.fn(),
             unregisterTool: jest.fn(),
             getAllTools: jest.fn().mockReturnValue([]),
-            sendPrompt: jest.fn().mockResolvedValue('Test response'),
+            sendPrompt: jest.fn().mockImplementation(async () => 'Test response'),
             clearConversationHistory: jest.fn(),
             addEventListener: jest.fn(),
             removeEventListener: jest.fn()
@@ -109,11 +113,13 @@ describe('MCP Bridge Manager', () => {
 
         // Start the bridge
         manager.startBridge(bridgeId);
-        expect(bridge.start).toHaveBeenCalledTimes(1);
+        expect(bridge).toBeDefined();
+        expect(bridge?.start).toHaveBeenCalledTimes(1);
 
         // Stop the bridge
         manager.stopBridge(bridgeId);
-        expect(bridge.stop).toHaveBeenCalledTimes(1);
+        expect(bridge).toBeDefined();
+        expect(bridge?.stop).toHaveBeenCalledTimes(1);
 
         // Remove the bridge
         manager.removeBridge(bridgeId);
@@ -178,7 +184,8 @@ describe('MCP Bridge Manager', () => {
         manager.dispose();
 
         // Check that all bridges were stopped
-        expect(bridge.stop).toHaveBeenCalled();
+        expect(bridge).toBeDefined();
+        expect(bridge?.stop).toHaveBeenCalled();
     });
 
     /**
@@ -210,12 +217,21 @@ describe('MCP Bridge Manager', () => {
 
         // Start all bridges
         manager.startAllBridges();
-        expect(manager.getBridge(bridgeId1).start).toHaveBeenCalledTimes(1);
-        expect(manager.getBridge(bridgeId2).start).toHaveBeenCalledTimes(1);
+
+        // Get the bridges and check they were started
+        const bridge1 = manager.getBridge(bridgeId1);
+        const bridge2 = manager.getBridge(bridgeId2);
+
+        expect(bridge1).toBeDefined();
+        expect(bridge2).toBeDefined();
+        expect(bridge1?.start).toHaveBeenCalledTimes(1);
+        expect(bridge2?.start).toHaveBeenCalledTimes(1);
 
         // Stop all bridges
         manager.stopAllBridges();
-        expect(manager.getBridge(bridgeId1).stop).toHaveBeenCalledTimes(1);
-        expect(manager.getBridge(bridgeId2).stop).toHaveBeenCalledTimes(1);
+
+        // We already have the bridge references, so we can use them directly
+        expect(bridge1?.stop).toHaveBeenCalledTimes(1);
+        expect(bridge2?.stop).toHaveBeenCalledTimes(1);
     });
 });

@@ -1,8 +1,8 @@
 /**
  * MCP Chat View
- * 
+ *
  * Provides a chat interface for interacting with LLMs through MCP servers.
- * 
+ *
  * @implements IMPL-UI-101 Display a chat interface for interacting with LLMs
  * @implements IMPL-UI-102 Allow sending messages to the LLM
  * @implements IMPL-UI-103 Display responses from the LLM
@@ -14,7 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { MCPBridgeManager, BridgeInfo } from '../mcp/mcpBridgeManager';
+import { MCPBridgeManager } from '../mcp/mcpBridgeManager';
 import { MCPToolCall } from '../mcp/mcpTypes';
 
 /**
@@ -44,18 +44,18 @@ export class MCPChatViewProvider {
   private extensionUri: vscode.Uri;
   private conversationHistory: Map<string, ChatMessage[]> = new Map();
   private activeBridgeId: string | undefined;
-  
+
   constructor(
     private context: vscode.ExtensionContext,
     private mcpBridgeManager: MCPBridgeManager,
     private outputChannel: vscode.OutputChannel
   ) {
     this.extensionUri = vscode.Uri.file(context.extensionPath);
-    
+
     // Register commands
     this.registerCommands();
   }
-  
+
   /**
    * Register commands for the chat view
    */
@@ -65,7 +65,7 @@ export class MCPChatViewProvider {
       vscode.commands.registerCommand('adamize.openMCPChat', () => this.createOrShowPanel())
     );
   }
-  
+
   /**
    * Create or show the chat panel
    */
@@ -75,7 +75,7 @@ export class MCPChatViewProvider {
       this.panel.reveal(vscode.ViewColumn.One);
       return this.panel;
     }
-    
+
     // Otherwise, create a new panel
     this.panel = vscode.window.createWebviewPanel(
       'mcpChat',
@@ -87,17 +87,17 @@ export class MCPChatViewProvider {
         localResourceRoots: [this.extensionUri]
       }
     );
-    
+
     // Set the webview's HTML content
     this.panel.webview.html = this.getWebviewContent(this.panel.webview);
-    
+
     // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
       (message: WebviewMessage) => this.handleWebviewMessage(message),
       undefined,
       this.context.subscriptions
     );
-    
+
     // Handle panel disposal
     this.panel.onDidDispose(
       () => {
@@ -106,20 +106,20 @@ export class MCPChatViewProvider {
       null,
       this.context.subscriptions
     );
-    
+
     // Initialize the active bridge ID
     const bridges = this.mcpBridgeManager.getAllBridges();
     if (bridges.length > 0) {
       const runningBridge = bridges.find(bridge => bridge.status === 'running');
       this.activeBridgeId = runningBridge ? runningBridge.id : bridges[0].id;
-      
+
       // Send the server list to the webview
       this.updateServerList();
     }
-    
+
     return this.panel;
   }
-  
+
   /**
    * Handle messages from the webview
    */
@@ -127,20 +127,20 @@ export class MCPChatViewProvider {
     if (!this.panel) {
       return;
     }
-    
+
     switch (message.command) {
       case 'sendMessage':
         if (message.text && message.bridgeId) {
           await this.sendMessage(message.text, message.bridgeId);
         }
         break;
-      
+
       case 'clearConversation':
         if (message.bridgeId) {
           this.clearConversation(message.bridgeId);
         }
         break;
-      
+
       case 'selectServer':
         if (message.bridgeId) {
           this.activeBridgeId = message.bridgeId;
@@ -149,7 +149,7 @@ export class MCPChatViewProvider {
         break;
     }
   }
-  
+
   /**
    * Send a message to the LLM
    */
@@ -157,35 +157,35 @@ export class MCPChatViewProvider {
     if (!this.panel) {
       return;
     }
-    
+
     const bridge = this.mcpBridgeManager.getBridge(bridgeId);
     if (!bridge) {
       vscode.window.showErrorMessage(`Bridge ${bridgeId} not found`);
       return;
     }
-    
+
     // Add user message to conversation history
     const userMessage: ChatMessage = { role: 'user', content: text };
     this.addMessageToHistory(bridgeId, userMessage);
-    
+
     // Send user message to webview
     this.panel.webview.postMessage({
       command: 'addMessage',
       message: userMessage
     });
-    
+
     try {
       // Send message to LLM
       const response = await bridge.sendMessage(text);
-      
+
       // Add assistant message to conversation history
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: response.response,
-        toolCalls: response.toolCalls
+        content: response,
+        toolCalls: [] // We'll need to parse tool calls from the response in a future update
       };
       this.addMessageToHistory(bridgeId, assistantMessage);
-      
+
       // Send assistant message to webview
       this.panel.webview.postMessage({
         command: 'addMessage',
@@ -196,7 +196,7 @@ export class MCPChatViewProvider {
       vscode.window.showErrorMessage(`Error sending message: ${error}`);
     }
   }
-  
+
   /**
    * Add a message to the conversation history
    */
@@ -204,23 +204,23 @@ export class MCPChatViewProvider {
     if (!this.conversationHistory.has(bridgeId)) {
       this.conversationHistory.set(bridgeId, []);
     }
-    
+
     this.conversationHistory.get(bridgeId)?.push(message);
   }
-  
+
   /**
    * Clear the conversation history
    */
   private clearConversation(bridgeId: string): void {
     this.conversationHistory.set(bridgeId, []);
-    
+
     if (this.panel) {
       this.panel.webview.postMessage({
         command: 'clearMessages'
       });
     }
   }
-  
+
   /**
    * Update the server list in the webview
    */
@@ -228,21 +228,21 @@ export class MCPChatViewProvider {
     if (!this.panel) {
       return;
     }
-    
+
     const bridges = this.mcpBridgeManager.getAllBridges();
     const servers = bridges.map(bridge => ({
       id: bridge.id,
       name: `${bridge.options.llmModel} (${bridge.status})`,
       status: bridge.status
     }));
-    
+
     this.panel.webview.postMessage({
       command: 'updateServerList',
       servers,
       activeBridgeId: this.activeBridgeId
     });
   }
-  
+
   /**
    * Get the webview content
    */
@@ -251,14 +251,14 @@ export class MCPChatViewProvider {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'chat', 'main.js'))
     );
-    
+
     const styleUri = webview.asWebviewUri(
       vscode.Uri.file(path.join(this.context.extensionPath, 'media', 'chat', 'style.css'))
     );
-    
+
     // Use a nonce to only allow specific scripts to be run
     const nonce = this.getNonce();
-    
+
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -276,20 +276,20 @@ export class MCPChatViewProvider {
           </select>
           <button id="clear-button" class="clear-button">Clear Conversation</button>
         </div>
-        
+
         <div id="chat-container" class="chat-container"></div>
-        
+
         <div class="input-container">
           <textarea id="message-input" class="message-input" placeholder="Type a message..."></textarea>
           <button id="send-button" class="send-button">Send</button>
         </div>
       </div>
-      
+
       <script nonce="${nonce}" src="${scriptUri}"></script>
     </body>
     </html>`;
   }
-  
+
   /**
    * Generate a nonce for the webview
    */
@@ -301,14 +301,14 @@ export class MCPChatViewProvider {
     }
     return text;
   }
-  
+
   /**
    * Get the conversation history for a bridge
    */
   public getConversationHistory(bridgeId: string): ChatMessage[] {
     return this.conversationHistory.get(bridgeId) || [];
   }
-  
+
   /**
    * Get the active bridge ID
    */

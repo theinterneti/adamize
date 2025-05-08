@@ -63,8 +63,11 @@ export class MCPToolRegistry {
         ...tool.description.toLowerCase().split(/\s+/).filter(word => word.length > 3)
       ];
 
+      // Create a Set and convert back to array to remove duplicates
+      const uniqueKeywords = Array.from(new Set(defaultKeywords));
+
       this.metadata.set(tool.name, {
-        keywords: [...new Set(defaultKeywords)], // Remove duplicates
+        keywords: uniqueKeywords,
         exampleArgs: this.generateExampleArgs(tool.name, tool.schema.functions[0]?.name)
       });
     }
@@ -154,7 +157,10 @@ export class MCPToolRegistry {
 
     let instructions = 'You have access to the following tools:\n\n';
 
-    for (const tool of this.tools.values()) {
+    // Convert iterator to array for compatibility
+    const tools = Array.from(this.tools.values());
+
+    for (const tool of tools) {
       instructions += `## ${tool.name}\n${tool.description}\n\n`;
 
       // Add metadata keywords if available
@@ -211,7 +217,10 @@ export class MCPToolRegistry {
     const toolScores: Array<{ name: string; score: number }> = [];
 
     // Score each tool based on keyword matches and priority
-    for (const [toolName, tool] of this.tools.entries()) {
+    // Convert entries to array for compatibility
+    const toolEntries = Array.from(this.tools.entries());
+
+    for (const [toolName, _tool] of toolEntries) {
       const metadata = this.metadata.get(toolName);
       if (!metadata) continue;
 

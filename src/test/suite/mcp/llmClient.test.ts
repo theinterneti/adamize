@@ -9,7 +9,7 @@
  */
 
 import * as sinon from 'sinon';
-import { expect, jest, describe, test, beforeEach, afterEach } from '@jest/globals';
+import { expect, describe, test, beforeEach, afterEach } from '@jest/globals';
 import * as vscode from 'vscode';
 
 // Import the component we'll be testing
@@ -92,7 +92,7 @@ describe('LLM Client', () => {
             bodyUsed: false,
             clone: () => ({} as Response),
             arrayBuffer: async () => new ArrayBuffer(0),
-            blob: async () => new Blob(),
+            blob: async () => new Blob([]),
             formData: async () => new FormData(),
             text: async () => '',
         } as Response);
@@ -128,7 +128,7 @@ describe('LLM Client', () => {
             bodyUsed: false,
             clone: () => ({} as Response),
             arrayBuffer: async () => new ArrayBuffer(0),
-            blob: async () => new Blob(),
+            blob: async () => new Blob([]),
             formData: async () => new FormData(),
             text: async () => '',
         } as Response);
@@ -167,7 +167,7 @@ describe('LLM Client', () => {
             bodyUsed: false,
             clone: () => ({} as Response),
             arrayBuffer: async () => new ArrayBuffer(0),
-            blob: async () => new Blob(),
+            blob: async () => new Blob([]),
             formData: async () => new FormData(),
             text: async () => '',
         } as Response);
@@ -240,7 +240,7 @@ describe('LLM Client', () => {
             bodyUsed: false,
             clone: () => ({} as Response),
             arrayBuffer: async () => new ArrayBuffer(0),
-            blob: async () => new Blob(),
+            blob: async () => new Blob([]),
             formData: async () => new FormData(),
             text: async () => '',
         } as Response);

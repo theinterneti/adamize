@@ -83,7 +83,11 @@ export class MCPBridge {
   private llmClient: LLMClient;
   private toolRegistry: MCPToolRegistry;
   private outputChannel: vscode.OutputChannel;
-  private options: MCPBridgeOptions;
+  // Store options for configuration reference
+  // This is stored for future use but not directly accessed
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore
+  private readonly _options: MCPBridgeOptions;
   private eventListeners: Map<MCPBridgeEventType, MCPBridgeEventListener[]> = new Map();
   private isRunning: boolean = false;
 
@@ -93,7 +97,7 @@ export class MCPBridge {
    * @param outputChannel Output channel for logging
    */
   constructor(options: MCPBridgeOptions, outputChannel: vscode.OutputChannel) {
-    this.options = options;
+    this._options = options;
     this.outputChannel = outputChannel;
     this.toolRegistry = new MCPToolRegistry(outputChannel);
     this.llmClient = new LLMClient(
@@ -180,7 +184,7 @@ export class MCPBridge {
       this.emitEvent(MCPBridgeEventType.PromptReceived, { prompt });
 
       const response = await this.llmClient.sendPrompt(prompt);
-      
+
       this.log(`Received response: ${response}`);
       this.emitEvent(MCPBridgeEventType.ResponseReceived, { response });
 
@@ -198,6 +202,26 @@ export class MCPBridge {
    */
   clearConversationHistory(keepSystemPrompt: boolean = true): void {
     this.llmClient.clearConversationHistory(keepSystemPrompt);
+  }
+
+  /**
+   * Send a message to the MCP server
+   * @param message Message to send
+   * @returns Server response
+   */
+  async sendMessage(message: string): Promise<string> {
+    if (!this.isRunning) {
+      throw new Error('MCP bridge is not running');
+    }
+
+    try {
+      this.log(`Sending message: ${message}`);
+      const response = await this.sendPrompt(message);
+      return response;
+    } catch (error) {
+      this.log(`Error sending message: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   }
 
   /**

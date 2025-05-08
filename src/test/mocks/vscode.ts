@@ -1,63 +1,96 @@
 // Mock implementation of the vscode module for testing
-const fn = () => {
-  return {
-    mockReturnValue: () => fn(),
-    mockImplementation: () => fn()
+import { ViewColumn } from 'vscode';
+
+// Helper function to create mock functions
+const createMockFn = () => {
+  const mockFn: any = function(...args: any[]) { return mockFn._implementation?.(...args); };
+  mockFn.mockReturnValue = function(val: any) {
+    mockFn._implementation = () => val;
+    return mockFn;
   };
+  mockFn.mockResolvedValue = function(val: any) {
+    mockFn._implementation = () => Promise.resolve(val);
+    return mockFn;
+  };
+  mockFn.mockRejectedValue = function(val: any) {
+    mockFn._implementation = () => Promise.reject(val);
+    return mockFn;
+  };
+  mockFn.mockImplementation = function(fn: any) {
+    mockFn._implementation = fn;
+    return mockFn;
+  };
+  mockFn.mock = { calls: [] };
+  return mockFn;
 };
+
+// Create a properly typed OutputChannel mock
+export class MockOutputChannel {
+  name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  append(_value: string): void {}
+  appendLine(_value: string): void {}
+  clear(): void {}
+  show(column?: ViewColumn, preserveFocus?: boolean): void;
+  show(preserveFocus?: boolean): void;
+  show(_columnOrPreserveFocus?: ViewColumn | boolean, _preserveFocus?: boolean): void {}
+  hide(): void {}
+  dispose(): void {}
+}
 
 export const window = {
   showInformationMessage: function() { return Promise.resolve(); },
   showErrorMessage: function() { return Promise.resolve(); },
   showWarningMessage: function() { return Promise.resolve(); },
-  createOutputChannel: function() {
-    return {
-      appendLine: function() {},
-      append: function() {},
-      show: function() {},
-      clear: function() {},
-      dispose: function() {}
-    };
-  }
+  createOutputChannel: function(name: string) {
+    return new MockOutputChannel(name);
+  },
+  createWebviewPanel: createMockFn(),
+  showQuickPick: createMockFn(),
+  showInputBox: createMockFn()
 };
 
 export const commands = {
-  registerCommand: fn(),
-  executeCommand: fn()
+  registerCommand: createMockFn(),
+  executeCommand: createMockFn()
 };
 
 export const workspace = {
   getConfiguration: () => ({
-    get: fn(),
-    update: fn(),
-    has: fn()
+    get: createMockFn(),
+    update: createMockFn(),
+    has: createMockFn()
   }),
   workspaceFolders: [],
-  onDidChangeConfiguration: fn()
+  onDidChangeConfiguration: createMockFn()
 };
 
 export const ExtensionContext = class {
   subscriptions = [];
   workspaceState = {
-    get: fn(),
-    update: fn()
+    get: createMockFn(),
+    update: createMockFn()
   };
   globalState = {
-    get: fn(),
-    update: fn()
+    get: createMockFn(),
+    update: createMockFn()
   };
   extensionPath = '';
-  asAbsolutePath = fn();
+  asAbsolutePath = createMockFn();
 };
 
 export const Uri = {
   file: (path: string) => ({ path }),
-  parse: fn()
+  parse: createMockFn()
 };
 
 export const EventEmitter = class {
-  event = fn();
-  fire = fn();
+  event = createMockFn();
+  fire = createMockFn();
 };
 
 export enum StatusBarAlignment {
@@ -65,8 +98,28 @@ export enum StatusBarAlignment {
   Right = 2
 }
 
+export enum TreeItemCollapsibleState {
+  None = 0,
+  Collapsed = 1,
+  Expanded = 2
+}
+
+export class TreeItem {
+  label?: string;
+  id?: string;
+  iconPath?: string | { id: string };
+  description?: string;
+  tooltip?: string;
+  command?: any;
+  contextValue?: string;
+
+  constructor(label: string, _collapsibleState?: TreeItemCollapsibleState) {
+    this.label = label;
+  }
+}
+
 export const languages = {
-  registerCompletionItemProvider: fn()
+  registerCompletionItemProvider: createMockFn()
 };
 
 export const CompletionItemKind = {
@@ -118,14 +171,14 @@ export class Range {
 
 export class Disposable {
   static from() {
-    return { dispose: fn() };
+    return { dispose: createMockFn() };
   }
-  dispose = fn();
+  dispose = createMockFn();
 }
 
 export const env = {
   clipboard: {
-    writeText: fn()
+    writeText: createMockFn()
   }
 };
 

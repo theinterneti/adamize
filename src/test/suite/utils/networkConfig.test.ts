@@ -12,9 +12,6 @@ import networkConfig, { Environment, ServiceType } from '../../../utils/networkC
 suite('Network Configuration Test Suite', () => {
   // Stubs
   let processEnvStub: sinon.SinonStub;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // We'll define vsCodeConfigStub when needed
-  // let vsCodeConfigStub: sinon.SinonStub;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockConfig: any;
 
@@ -35,7 +32,7 @@ suite('Network Configuration Test Suite', () => {
 
     // Stub VS Code workspace.getConfiguration
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vsCodeConfigStub = sinon.stub(vscode.workspace, 'getConfiguration').returns(mockConfig as any);
+    sinon.stub(vscode.workspace, 'getConfiguration').returns(mockConfig as any);
   });
 
   // Teardown after each test

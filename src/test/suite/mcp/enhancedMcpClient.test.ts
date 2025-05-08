@@ -31,6 +31,7 @@ import { EnhancedMCPClient, ConnectionMethod } from '../../../mcp/enhancedMcpCli
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as _childProcess from 'child_process';
 import networkConfig, { ServiceType } from '../../../utils/networkConfig';
+import { createOutputChannelStub } from '../../helpers/testHelpers';
 
 suite('Enhanced MCP Client Test Suite', () => {
   // Stubs
@@ -52,14 +53,7 @@ suite('Enhanced MCP Client Test Suite', () => {
     // Instead, we'll use a different approach for testing Docker exec functionality
 
     // Create output channel stub
-    outputChannelStub = {
-      appendLine: sinon.stub(),
-      append: sinon.stub(),
-      clear: sinon.stub(),
-      show: sinon.stub() as unknown as sinon.SinonStub & ((preserveFocus?: boolean) => void),
-      hide: sinon.stub(),
-      dispose: sinon.stub()
-    };
+    outputChannelStub = createOutputChannelStub();
 
     // Stub VS Code window.createOutputChannel
     // Using 'as any' is necessary here due to the complex VS Code API types

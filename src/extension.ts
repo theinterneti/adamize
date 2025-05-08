@@ -1,22 +1,31 @@
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/mcpClient';
-import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
+// import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
 import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 import { MCPServerExplorerProvider } from './ui/mcpServerExplorerView';
 import { MCPChatViewProvider } from './ui/mcpChatView';
+import { MemoryGraphViewProvider } from './ui/memoryGraphView';
 import { MCPBridgeManager } from './mcp/mcpBridgeManager';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
-let enhancedMcpClient: EnhancedMCPClient | undefined;
+// These variables are used in the activate function
 let memoryClient: Neo4jMemoryClient | undefined;
 let enhancedMemoryClient: EnhancedNeo4jMemoryClient | undefined;
 let mcpBridgeManager: MCPBridgeManager | undefined;
 let mcpServerExplorerProvider: MCPServerExplorerProvider | undefined;
-let mcpChatViewProvider: MCPChatViewProvider | undefined;
+// These providers are initialized but not directly used in this file
+// They're kept as module variables for cleanup during deactivation
+// Using _ prefix to indicate these are intentionally unused in this scope
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// @ts-ignore
+let _mcpChatViewProvider: MCPChatViewProvider | undefined;
+// @ts-ignore
+let _memoryGraphViewProvider: MemoryGraphViewProvider | undefined;
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -188,7 +197,11 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   // Initialize MCP Chat View Provider
-  mcpChatViewProvider = new MCPChatViewProvider(context, mcpBridgeManager, outputChannel);
+  _mcpChatViewProvider = new MCPChatViewProvider(context, mcpBridgeManager, outputChannel);
+
+  // Initialize Memory Graph View Provider
+  enhancedMemoryClient = new EnhancedNeo4jMemoryClient();
+  _memoryGraphViewProvider = new MemoryGraphViewProvider(context, enhancedMemoryClient, outputChannel);
 
   // Add commands to subscriptions
   context.subscriptions.push(showWelcomeCommand);
@@ -216,7 +229,9 @@ export function deactivate() {
 
   // Clean up other providers
   mcpServerExplorerProvider = undefined;
-  mcpChatViewProvider = undefined;
+  _mcpChatViewProvider = undefined;
+  _memoryGraphViewProvider = undefined;
+  enhancedMemoryClient = undefined;
 }
 
 /**

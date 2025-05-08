@@ -11,7 +11,8 @@
  * @implements REQ-TYPES-006 Support multiple MCP servers
  */
 
-import * as vscode from 'vscode';
+// VS Code types are used for documentation purposes
+// import * as vscode from 'vscode';
 import { IMCPToolSchema } from '../mcpTypes';
 
 /**

@@ -4,6 +4,10 @@
   "description": "AI-assisted development with a focus on test-driven development and DevOps best practices",
   "version": "0.0.1",
   "publisher": "adamize",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theinterneti/adamize.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -209,6 +213,12 @@
         "title": "Open MCP Chat",
         "category": "Adamize",
         "icon": "$(comment)"
+      },
+      {
+        "command": "adamize.openMemoryGraph",
+        "title": "Open Memory Graph",
+        "category": "Adamize",
+        "icon": "$(graph)"
       }
     ],
     "menus": {
@@ -244,6 +254,11 @@
           "command": "adamize.openMCPChat",
           "when": "view == mcpServerExplorer && viewItem == mcpServer-running",
           "group": "navigation"
+        },
+        {
+          "command": "adamize.openMemoryGraph",
+          "when": "view == mcpServerExplorer && viewItem == mcpServer-running",
+          "group": "navigation"
         }
       ]
     }
@@ -273,8 +288,8 @@
     "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src --ext ts --fix",
     "precommit": "lint-staged",
-    "package": "@vscode/vsce package",
-    "publish": "@vscode/vsce publish",
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish",
     "identify:green": "node scripts/identify-green-pairs.js",
     "identify:green:commit": "node scripts/identify-green-pairs.js --commit",
     "identify:green:dry": "node scripts/identify-green-pairs.js --dry-run --verbose"
@@ -289,7 +304,7 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vscode/test-electron": "^2.3.9",
-    "@vscode/vsce": "^2.15.0",
+    "@vscode/vsce": "^2.32.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "glob": "^10.3.10",
@@ -305,6 +320,12 @@
   "dependencies": {
     "axios": "^1.6.8",
     "chokidar": "^3.6.0",
+    "cytoscape": "^3.28.1",
+    "cytoscape-cola": "^2.5.1",
+    "cytoscape-context-menus": "^4.2.1",
+    "cytoscape-dagre": "^2.5.0",
+    "cytoscape-navigator": "^2.0.2",
+    "cytoscape-popper": "^4.0.1",
     "eventsource": "^3.0.6",
     "uuid": "^9.0.1"
   }

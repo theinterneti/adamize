@@ -43,7 +43,7 @@ describe('MCP Bridge', () => {
 
         // Set up mocks
         (LLMClient as jest.Mock).mockImplementation(() => ({
-            sendPrompt: jest.fn().mockResolvedValue('Test response'),
+            sendPrompt: jest.fn().mockImplementation(async () => 'Test response'),
             clearConversationHistory: jest.fn()
         }));
 
@@ -129,7 +129,8 @@ describe('MCP Bridge', () => {
      */
     test('should register and execute tools', async () => {
         // Create a mock tool
-        const mockTool: MCPTool = {
+        // Use type assertion to work around the type issue
+        const mockTool = {
             name: 'test-tool',
             description: 'A test tool',
             schema: {
@@ -148,8 +149,8 @@ describe('MCP Bridge', () => {
                     returnType: 'string'
                 }]
             },
-            execute: jest.fn().mockResolvedValue('Tool result')
-        };
+            execute: jest.fn().mockReturnValue(Promise.resolve({ status: 'success', result: 'Tool result' }))
+        } as MCPTool;
 
         // Register the tool
         bridge.registerTool(mockTool);
@@ -158,8 +159,8 @@ describe('MCP Bridge', () => {
         expect(toolRegistryMock.registerTool).toHaveBeenCalledTimes(1);
         expect(toolRegistryMock.registerTool).toHaveBeenCalledWith(mockTool);
 
-        // Get all tools
-        const tools = bridge.getAllTools();
+        // Get all tools and verify the call was made
+        bridge.getAllTools();
         expect(toolRegistryMock.getAllTools).toHaveBeenCalledTimes(1);
     });
 
@@ -197,7 +198,14 @@ describe('MCP Bridge', () => {
 
         // Check that the listener was called
         expect(listener).toHaveBeenCalledTimes(1);
-        expect(listener.mock.calls[0][0].type).toBe(MCPBridgeEventType.Started);
+
+        // Get the first argument of the first call and check its type property
+        const eventArg = listener.mock.calls[0][0];
+        expect(eventArg).toBeDefined();
+
+        // Type assertion to handle the unknown type
+        const typedEventArg = eventArg as { type: MCPBridgeEventType };
+        expect(typedEventArg.type).toBe(MCPBridgeEventType.Started);
 
         // Remove the listener
         bridge.removeEventListener(MCPBridgeEventType.Started, listener);

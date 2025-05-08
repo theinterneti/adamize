@@ -23,12 +23,33 @@ export interface IMCPServerConfig {
 
   /** Additional server options */
   options?: Record<string, unknown>;
+
+  /** Server type (stdio or sse) */
+  type?: string;
+
+  /** Command for stdio servers */
+  command?: string;
+
+  /** Arguments for stdio servers */
+  args?: string[];
+
+  /** Environment variables for stdio servers */
+  env?: Record<string, string>;
+
+  /** Headers for HTTP requests */
+  headers?: Record<string, string>;
+
+  /** Source of the configuration (workspace or user) */
+  source?: string;
 }
 
 /**
  * MCP Input Variable
  */
 export interface IMCPInputVariable {
+  /** Variable ID */
+  id: string;
+
   /** Variable name */
   name: string;
 
@@ -57,6 +78,12 @@ export interface MCPTool {
 
   /** Tool schema */
   schema: IMCPToolSchema;
+
+  /** Tool parameters */
+  parameters?: {
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
 
   /** Execute function */
   execute: (functionName: string, parameters: Record<string, unknown>) => Promise<unknown>;
@@ -222,4 +249,18 @@ export enum MCPErrorCode {
 
   /** Function call error */
   FUNCTION_CALL_ERROR = 'FUNCTION_CALL_ERROR',
+}
+
+/**
+ * MCP Tool Call
+ */
+export interface MCPToolCall {
+  /** Tool name */
+  tool: string;
+
+  /** Function name */
+  function: string;
+
+  /** Function arguments */
+  arguments: Record<string, unknown>;
 }
