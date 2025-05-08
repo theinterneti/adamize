@@ -21,8 +21,56 @@ suite('Extension Test Suite', () => {
       dispose: sinon.stub()
     });
 
+    // Add registerTextEditorCommand to vscode.commands if it doesn't exist
+    if (!vscode.commands.registerTextEditorCommand) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode.commands as any).registerTextEditorCommand = () => ({
+        dispose: sinon.stub()
+      });
+    }
+
+    // Stub registerTextEditorCommand
+    sinon.stub(vscode.commands, 'registerTextEditorCommand').returns({
+      dispose: sinon.stub()
+    });
+
     // Create stubs for VS Code window functions
     sinon.stub(vscode.window, 'createOutputChannel').returns(createOutputChannelStub());
+
+    // Add createTextEditorDecorationType to vscode.window if it doesn't exist
+    if (!vscode.window.createTextEditorDecorationType) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode.window as any).createTextEditorDecorationType = () => ({
+        dispose: sinon.stub()
+      });
+    }
+
+    // Mock OverviewRulerLane enum
+    if (!vscode.OverviewRulerLane) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode as any).OverviewRulerLane = {
+        Left: 1,
+        Center: 2,
+        Right: 3,
+        Full: 4
+      };
+    }
+
+    // Mock window event handlers
+    if (!vscode.window.onDidChangeActiveTextEditor) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode.window as any).onDidChangeActiveTextEditor = () => ({
+        dispose: sinon.stub()
+      });
+    }
+
+    // Mock workspace event handlers
+    if (!vscode.workspace.onDidChangeTextDocument) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode.workspace as any).onDidChangeTextDocument = () => ({
+        dispose: sinon.stub()
+      });
+    }
 
     // Add createTreeView to vscode.window if it doesn't exist
     if (!vscode.window.createTreeView) {

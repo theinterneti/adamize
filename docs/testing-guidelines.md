@@ -69,6 +69,25 @@ npm run create:enhanced-test src/mcp/mcpClient --suite=mcp --req=MCP
 - `scripts/create-test.js`: Creates a test file using the basic template
 - `scripts/create-enhanced-test.js`: Creates a test file using the enhanced template
 
+### Procedural Test Generation Scripts
+
+- `scripts/generate-tests.js`: Generates tests based on source code analysis
+- `scripts/generate-coverage-tests.js`: Generates tests based on coverage data
+
+To generate tests for a specific file:
+
+```bash
+npm run generate:tests src/path/to/file.ts
+```
+
+To generate tests based on coverage data:
+
+```bash
+npm run generate:coverage-tests
+```
+
+For more details, see [Procedural Test Generation](./dev/procedural-test-generation.md).
+
 ### Update and Check Scripts
 
 - `scripts/update-tests.js`: Updates existing tests to meet CI/CD requirements

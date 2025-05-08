@@ -8,7 +8,10 @@ import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 import { MCPServerExplorerProvider } from './ui/mcpServerExplorerView';
 import { MCPChatViewProvider } from './ui/mcpChatView';
 import { MemoryGraphViewProvider } from './ui/memoryGraphView';
+import { OllamaConfigViewProvider } from './ui/ollamaConfigView';
 import { MCPBridgeManager } from './mcp/mcpBridgeManager';
+import { initializeTestGenerationCommands } from './commands/testGenerationCommands';
+import { CoverageVisualizationProvider } from './ui/coverageVisualizationProvider';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
@@ -25,6 +28,10 @@ let mcpServerExplorerProvider: MCPServerExplorerProvider | undefined;
 let _mcpChatViewProvider: MCPChatViewProvider | undefined;
 // @ts-ignore
 let _memoryGraphViewProvider: MemoryGraphViewProvider | undefined;
+// @ts-ignore
+let _ollamaConfigViewProvider: OllamaConfigViewProvider | undefined;
+// @ts-ignore
+let _coverageVisualizationProvider: CoverageVisualizationProvider | undefined;
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 // This method is called when your extension is activated
@@ -203,6 +210,85 @@ export function activate(context: vscode.ExtensionContext) {
   enhancedMemoryClient = new EnhancedNeo4jMemoryClient();
   _memoryGraphViewProvider = new MemoryGraphViewProvider(context, enhancedMemoryClient, outputChannel);
 
+  // Initialize test generation commands
+  initializeTestGenerationCommands(context);
+
+  // Initialize coverage visualization provider
+  _coverageVisualizationProvider = new CoverageVisualizationProvider(context);
+
+  // Initialize Ollama configuration view provider
+  _ollamaConfigViewProvider = new OllamaConfigViewProvider(context);
+
+  // Register Ollama commands
+  const startOllamaCommand = vscode.commands.registerCommand('adamize.startOllama', async () => {
+    vscode.window.showInformationMessage('Starting Ollama...');
+
+    try {
+      const baseUrl = vscode.workspace.getConfiguration('adamize.ollama').get('baseUrl') as string || 'http://localhost:11434';
+
+      // Try to connect to Ollama
+      const response = await fetch(`${baseUrl}/api/tags`);
+
+      if (response.ok) {
+        vscode.window.showInformationMessage('Ollama is already running');
+        return;
+      }
+    } catch (error) {
+      // Ollama is not running, start it
+      const terminal = vscode.window.createTerminal('Ollama');
+      terminal.sendText('ollama serve');
+      terminal.show();
+
+      vscode.window.showInformationMessage('Ollama server started');
+    }
+  });
+
+  const stopOllamaCommand = vscode.commands.registerCommand('adamize.stopOllama', async () => {
+    vscode.window.showInformationMessage('Stopping Ollama...');
+
+    // Find and kill Ollama process
+    const terminal = vscode.window.createTerminal('Stop Ollama');
+
+    if (process.platform === 'win32') {
+      terminal.sendText('taskkill /F /IM ollama.exe');
+    } else {
+      terminal.sendText('pkill -f ollama');
+    }
+
+    terminal.sendText('exit');
+
+    vscode.window.showInformationMessage('Ollama server stopped');
+  });
+
+  const openOllamaChatCommand = vscode.commands.registerCommand('adamize.openOllamaChat', async () => {
+    vscode.window.showInformationMessage('Opening Ollama Chat...');
+
+    // Create a bridge for Ollama
+    const ollamaConfig = vscode.workspace.getConfiguration('adamize.ollama');
+    const bridgeId = mcpBridgeManager?.createBridge({
+      llmProvider: 'ollama' as any,
+      llmModel: ollamaConfig.get('model') as string || 'qwen3-coder',
+      llmEndpoint: ollamaConfig.get('endpoint') as string || 'http://localhost:11434/v1/chat/completions',
+      systemPrompt: ollamaConfig.get('systemPrompt') as string,
+      temperature: ollamaConfig.get('temperature') as number,
+      maxTokens: ollamaConfig.get('maxTokens') as number
+    });
+
+    if (bridgeId && mcpBridgeManager) {
+      mcpBridgeManager.startBridge(bridgeId);
+
+      // Open chat view
+      await vscode.commands.executeCommand('adamize.openMCPChat');
+    } else {
+      vscode.window.showErrorMessage('Failed to create Ollama bridge');
+    }
+  });
+
+  // Add Ollama commands to subscriptions
+  context.subscriptions.push(startOllamaCommand);
+  context.subscriptions.push(stopOllamaCommand);
+  context.subscriptions.push(openOllamaChatCommand);
+
   // Add commands to subscriptions
   context.subscriptions.push(showWelcomeCommand);
   context.subscriptions.push(connectMCPCommand);
@@ -231,6 +317,8 @@ export function deactivate() {
   mcpServerExplorerProvider = undefined;
   _mcpChatViewProvider = undefined;
   _memoryGraphViewProvider = undefined;
+  _ollamaConfigViewProvider = undefined;
+  _coverageVisualizationProvider = undefined;
   enhancedMemoryClient = undefined;
 }
 

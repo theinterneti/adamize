@@ -67,6 +67,50 @@
           "default": "auto",
           "description": "MCP connection method (http, docker-exec, local-process, auto)"
         },
+        "adamize.ollama.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Ollama integration"
+        },
+        "adamize.ollama.provider": {
+          "type": "string",
+          "enum": ["ollama"],
+          "default": "ollama",
+          "description": "LLM provider to use"
+        },
+        "adamize.ollama.model": {
+          "type": "string",
+          "default": "qwen3-coder",
+          "description": "Ollama model to use"
+        },
+        "adamize.ollama.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Base URL for Ollama API"
+        },
+        "adamize.ollama.endpoint": {
+          "type": "string",
+          "default": "http://localhost:11434/v1/chat/completions",
+          "description": "Endpoint for Ollama API"
+        },
+        "adamize.ollama.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature for Ollama model generation"
+        },
+        "adamize.ollama.maxTokens": {
+          "type": "number",
+          "default": 2000,
+          "minimum": 1,
+          "description": "Maximum tokens to generate"
+        },
+        "adamize.ollama.systemPrompt": {
+          "type": "string",
+          "default": "You are a helpful assistant that can use tools to help answer questions.",
+          "description": "System prompt for Ollama"
+        },
         "adamize.services": {
           "type": "object",
           "default": {},
@@ -179,6 +223,51 @@
         "category": "Adamize"
       },
       {
+        "command": "adamize.generateTests",
+        "title": "Generate Tests",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateTestsForCurrentFile",
+        "title": "Generate Tests for Current File",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateCoverageTests",
+        "title": "Generate Tests Based on Coverage",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateAITests",
+        "title": "Generate AI-Powered Tests",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateAITestsForCurrentFile",
+        "title": "Generate AI-Powered Tests for Current File",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateTestForSelection",
+        "title": "Generate Test for Selection",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.loadCoverageData",
+        "title": "Load Coverage Data",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.clearCoverageData",
+        "title": "Clear Coverage Data",
+        "category": "Adamize"
+      },
+      {
+        "command": "adamize.generateTestForUncovered",
+        "title": "Generate Test for Uncovered Code",
+        "category": "Adamize"
+      },
+      {
         "command": "adamize.refreshMCPServers",
         "title": "Refresh MCP Servers",
         "category": "Adamize",
@@ -234,6 +323,38 @@
           "group": "navigation"
         }
       ],
+      "editor/context": [
+        {
+          "command": "adamize.generateTestsForCurrentFile",
+          "when": "resourceLangId == typescript",
+          "group": "adamize@1"
+        },
+        {
+          "command": "adamize.generateAITestsForCurrentFile",
+          "when": "resourceLangId == typescript",
+          "group": "adamize@1"
+        },
+        {
+          "command": "adamize.generateTestForSelection",
+          "when": "resourceLangId == typescript && editorHasSelection",
+          "group": "adamize@2"
+        },
+        {
+          "command": "adamize.loadCoverageData",
+          "when": "resourceLangId == typescript",
+          "group": "adamize@3"
+        },
+        {
+          "command": "adamize.clearCoverageData",
+          "when": "resourceLangId == typescript",
+          "group": "adamize@3"
+        },
+        {
+          "command": "adamize.generateTestForUncovered",
+          "when": "resourceLangId == typescript && editorHasSelection",
+          "group": "adamize@4"
+        }
+      ],
       "view/item/context": [
         {
           "command": "adamize.startMCPServer",
@@ -286,6 +407,9 @@
     "tdd:auto-commit": "node scripts/tdd.js --auto-commit",
     "create:test": "node scripts/create-test.js",
     "create:enhanced-test": "node scripts/create-enhanced-test.js",
+    "generate:tests": "node scripts/generate-tests.js",
+    "generate:coverage-tests": "node scripts/generate-coverage-tests.js",
+    "generate:ai-tests": "node scripts/generate-ai-tests.js",
     "update:tests": "node scripts/update-tests.js",
     "check:ci": "node scripts/check-ci-compatibility.js",
     "pre:pr": "npm run lint && npm run typecheck && npm run test:unit && npm run check:ci",
@@ -336,6 +460,7 @@
     "cytoscape-navigator": "^2.0.2",
     "cytoscape-popper": "^4.0.1",
     "eventsource": "^3.0.6",
+    "node-fetch": "^3.3.2",
     "uuid": "^11.1.0"
   }
 }

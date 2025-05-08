@@ -127,6 +127,8 @@ This project follows a strict test-driven development workflow:
 - `npm run test:unit` - Run Jest unit tests
 - `npm run test:unit:watch` - Run Jest tests in watch mode
 - `npm run test:coverage` - Generate coverage reports
+- `npm run generate:tests` - Generate tests based on source code analysis
+- `npm run generate:coverage-tests` - Generate tests based on coverage data
 - `npm run identify:green` - Identify and stage passing tests and their implementations
 - `npm run identify:green:commit` - Identify, stage, and commit passing tests
 

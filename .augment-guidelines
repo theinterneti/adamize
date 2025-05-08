@@ -28,6 +28,9 @@ This project follows a STRICT test-driven development workflow. You MUST follow 
 - `npm run tdd:auto-stage` - Watch for changes and automatically stage passing tests
 - `npm run tdd:auto-commit` - Watch for changes and automatically commit passing tests
 - `npm run create:test` - Generate a new test file from template
+- `npm run generate:tests` - Generate tests for a specific file
+- `npm run generate:coverage-tests` - Generate tests based on coverage data
+- `npm run generate:ai-tests` - Generate AI-powered tests for a specific file
 - `npm run test:unit` - Run Jest unit tests
 - `npm run test:unit:watch` - Run Jest tests in watch mode
 - `npm run test:coverage` - Generate coverage reports
@@ -81,6 +84,39 @@ The project includes a feature for identifying "green" code-test pairs (passing 
 
 See `docs/dev/green-code-test-pairs.md` for detailed documentation.
 
+### Procedural Test Generation
+The project includes a feature for automatically generating tests based on source code analysis and coverage data. This helps developers follow the TDD workflow by providing a starting point for test files.
+
+- **Source Code Analysis**: Analyzes TypeScript files to identify classes, methods, and requirement tags
+- **Coverage Analysis**: Analyzes coverage data to identify uncovered code
+- **Template Customization**: Supports different test templates (default, Jest, TDD, enhanced, ai-assisted)
+- **VS Code Integration**: Integrated with VS Code through commands and context menu items
+- **Coverage Visualization**: Highlights uncovered code in the editor
+
+See `docs/dev/procedural-test-generation.md` for detailed documentation.
+
+### Enhanced Template System
+The project includes an enhanced template system for test generation that provides more flexibility and power.
+
+- **More Template Variables**: Additional variables for more flexible templates (parameterList, returnType, etc.)
+- **Variable Transformations**: Support for transforming variables (camelCase, pascalCase, snakeCase, kebabCase)
+- **Conditional Blocks**: Support for conditional content based on variable values
+- **Template Inheritance**: Support for templates that extend other templates
+- **Custom Template Directories**: Support for loading templates from custom directories
+
+See `docs/dev/enhanced-template-system.md` for detailed documentation.
+
+### AI-Powered Test Generation
+The project includes AI-powered test generation that uses local LLMs to generate more intelligent tests.
+
+- **LLM Integration**: Integration with local LLMs (Ollama) for test generation
+- **Code Understanding**: Better understanding of code purpose and behavior
+- **Edge Case Detection**: Identification of potential edge cases
+- **Improved Assertions**: Generation of more specific and meaningful assertions
+- **Test Maintenance**: Support for updating tests when code changes
+
+See `docs/dev/ai-powered-test-generation.md` for detailed documentation.
+
 ## MCP Client Implementation
 The first feature to be implemented is an MCP (Model Context Protocol) client that will:
 - Connect to MCP servers
@@ -109,34 +145,60 @@ The first feature to be implemented is an MCP (Model Context Protocol) client th
 The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in our VS Code extension. It enables local LLM-powered agents to maintain and update a memory graph of project knowledge.
 
 ### MCP Bridge Components
-- **VS Code Logger**: Replaces console-based logging with VS Code output channel
-- **Bridge Types**: Defines types for the MCP Bridge components
-- **MCP Bridge Client**: Handles communication with MCP servers
-- **LLM Client**: Handles communication with Ollama (to be implemented)
-- **Tool Registry**: Manages tool registration and discovery (to be implemented)
-- **MCP Bridge**: Core bridge component that manages tool registration and execution (to be implemented)
-- **MCP Bridge Manager**: Manages the bridge lifecycle and integration with VS Code (to be implemented)
+- **VS Code Logger**: Replaces console-based logging with VS Code output channel ✅
+- **Bridge Types**: Defines types for the MCP Bridge components ✅
+- **MCP Bridge Client**: Handles communication with MCP servers ✅
+- **LLM Client**: Handles communication with Ollama ✅
+- **Tool Registry**: Manages tool registration and discovery (partially implemented)
+- **MCP Bridge**: Core bridge component that manages tool registration and execution (partially implemented)
+- **MCP Bridge Manager**: Manages the bridge lifecycle and integration with VS Code (partially implemented)
 
 ### MCP Bridge Requirements
-- **REQ-LOGGER-001**: Replace console-based logging with VS Code output channel
-- **REQ-LOGGER-002**: Support different log levels (debug, info, warn, error)
-- **REQ-LOGGER-003**: Support log formatting
-- **REQ-LOGGER-004**: Support log filtering by level
-- **REQ-TYPES-001**: Adapt types to work with VS Code extension context
-- **REQ-TYPES-002**: Add VS Code-specific types
-- **REQ-TYPES-003**: Ensure compatibility with existing MCP types
-- **REQ-TYPES-004**: Add types for configuration management
-- **REQ-TYPES-005**: Support multiple connection methods
-- **REQ-TYPES-006**: Support multiple MCP servers
-- **REQ-MCPCLIENT-001**: Replace process spawning with VS Code-compatible approach
-- **REQ-MCPCLIENT-002**: Adapt JSON-RPC communication for VS Code
-- **REQ-MCPCLIENT-003**: Integrate with VS Code's output channel for logging
-- **REQ-MCPCLIENT-004**: Add support for multiple connection methods
-- **REQ-MCPCLIENT-005**: Ensure compatibility with existing MCP client
-- **REQ-MCPCLIENT-006**: Support tool discovery and registration
-- **REQ-MCPCLIENT-007**: Support function calling with parameter validation
-- **REQ-MCPCLIENT-008**: Handle connection errors gracefully
-- **REQ-MCPCLIENT-009**: Support multiple MCP servers
+- **REQ-LOGGER-001**: Replace console-based logging with VS Code output channel ✅
+- **REQ-LOGGER-002**: Support different log levels (debug, info, warn, error) ✅
+- **REQ-LOGGER-003**: Support log formatting ✅
+- **REQ-LOGGER-004**: Support log filtering by level ✅
+- **REQ-TYPES-001**: Adapt types to work with VS Code extension context ✅
+- **REQ-TYPES-002**: Add VS Code-specific types ✅
+- **REQ-TYPES-003**: Ensure compatibility with existing MCP types ✅
+- **REQ-TYPES-004**: Add types for configuration management ✅
+- **REQ-TYPES-005**: Support multiple connection methods ✅
+- **REQ-TYPES-006**: Support multiple MCP servers ✅
+- **REQ-MCPCLIENT-001**: Replace process spawning with VS Code-compatible approach ✅
+- **REQ-MCPCLIENT-002**: Adapt JSON-RPC communication for VS Code ✅
+- **REQ-MCPCLIENT-003**: Integrate with VS Code's output channel for logging ✅
+- **REQ-MCPCLIENT-004**: Add support for multiple connection methods ✅
+- **REQ-MCPCLIENT-005**: Ensure compatibility with existing MCP client ✅
+- **REQ-MCPCLIENT-006**: Support tool discovery and registration ✅
+- **REQ-MCPCLIENT-007**: Support function calling with parameter validation ✅
+- **REQ-MCPCLIENT-008**: Handle connection errors gracefully ✅
+- **REQ-MCPCLIENT-009**: Support multiple MCP servers ✅
+
+## Ollama Integration
+The Ollama integration enables the use of local LLMs through Ollama for various features in the Adamize VS Code extension. This integration is a key component of the MCP Bridge implementation.
+
+### Ollama Integration Components
+- **LLM Bridge Client**: Handles communication with Ollama ✅
+- **Ollama Configuration View**: Provides a UI for configuring Ollama settings ✅
+- **Ollama Commands**: Provides commands for starting, stopping, and configuring Ollama ✅
+- **MCP Bridge Integration**: Integrates Ollama with the MCP Bridge (partially implemented)
+
+### Ollama Integration Requirements
+- **REQ-OLLAMA-001**: Connect to Ollama API ✅
+- **REQ-OLLAMA-002**: Send prompts to Ollama and process responses ✅
+- **REQ-OLLAMA-003**: Extract tool calls from Ollama responses ✅
+- **REQ-OLLAMA-004**: Manage conversation history ✅
+- **REQ-OLLAMA-005**: Start and stop Ollama from within VS Code ✅
+- **REQ-OLLAMA-006**: Configure Ollama settings through VS Code settings ✅
+- **REQ-OLLAMA-007**: Provide a UI for configuring Ollama settings ✅
+- **REQ-OLLAMA-008**: Support multiple LLM providers (framework in place) ✅
+- **REQ-OLLAMA-009**: Dynamically load available models from Ollama ✅
+- **REQ-OLLAMA-010**: Test connection to Ollama ✅
+- **REQ-OLLAMA-011**: Integrate with MCP tools (partially implemented)
+- **REQ-OLLAMA-012**: Support streaming responses from Ollama (to be implemented)
+- **REQ-OLLAMA-013**: Support model management (pulling, removing, etc.) (to be implemented)
+- **REQ-OLLAMA-014**: Support advanced configuration options (to be implemented)
+- **REQ-OLLAMA-015**: Support multiple models simultaneously (to be implemented)
 
 ## Project Structure
 - `src/` - Source code
@@ -149,14 +211,18 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
       - `vscodeLogger.ts` - VS Code Logger implementation
       - `bridgeTypes.ts` - Bridge type definitions
       - `mcpBridgeClient.ts` - MCP Bridge Client implementation
-      - `llmClient.ts` - LLM Client implementation (to be implemented)
-      - `toolRegistry.ts` - Tool Registry implementation (to be implemented)
-      - `mcpBridge.ts` - MCP Bridge implementation (to be implemented)
-      - `mcpBridgeManager.ts` - MCP Bridge Manager implementation (to be implemented)
+      - `llmClient.ts` - LLM Client implementation
+      - `toolRegistry.ts` - Tool Registry implementation (partially implemented)
+      - `mcpBridge.ts` - MCP Bridge implementation (partially implemented)
+      - `mcpBridgeManager.ts` - MCP Bridge Manager implementation (partially implemented)
   - `ui/` - User interface components
     - `memoryGraphView.ts` - Memory graph visualization using Cytoscape.js
     - `mcpChatView.ts` - Chat interface for interacting with LLMs through MCP
     - `mcpServerExplorerView.ts` - VS Code sidebar view for managing MCP servers
+    - `ollamaConfigView.ts` - UI for configuring Ollama settings
+    - `coverageVisualizationProvider.ts` - Coverage visualization provider
+  - `commands/` - VS Code commands
+    - `testGenerationCommands.ts` - Test generation commands
   - `test/` - Test code
     - `suite/` - Test suites
       - `mcp/` - MCP client tests
@@ -165,7 +231,7 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
         - `bridge/` - MCP Bridge tests
           - `vscodeLogger.test.ts` - Tests for VS Code Logger
           - `mcpBridgeClient.test.ts` - Tests for MCP Bridge Client
-          - `llmClient.test.ts` - Tests for LLM Client (to be implemented)
+          - `llmClient.test.ts` - Tests for LLM Client
           - `toolRegistry.test.ts` - Tests for Tool Registry (to be implemented)
           - `mcpBridge.test.ts` - Tests for MCP Bridge (to be implemented)
           - `mcpBridgeManager.test.ts` - Tests for MCP Bridge Manager (to be implemented)
@@ -173,6 +239,7 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
         - `memoryGraphView.test.ts` - Tests for memory graph visualization
         - `mcpChatView.test.ts` - Tests for MCP chat interface
         - `mcpServerExplorerView.test.ts` - Tests for MCP server explorer
+        - `ollamaConfigView.test.ts` - Tests for Ollama configuration view
     - `templates/` - Test templates
     - `setup.ts` - Test setup
     - `runTest.ts` - Test runner
@@ -181,10 +248,25 @@ The MCP Bridge implementation adapts the ollama-mcp-bridge repository for use in
   - `dev/` - Development documentation
     - `research/` - Research documents
     - `green-code-test-pairs.md` - Documentation for GREEN code-test pairs identification
+    - `procedural-test-generation.md` - Documentation for procedural test generation
+    - `enhanced-template-system.md` - Documentation for enhanced template system
+    - `ai-powered-test-generation.md` - Documentation for AI-powered test generation
+  - `features/` - Feature documentation
+    - `test-generation.md` - Documentation for test generation features
+    - `ollama-integration.md` - Documentation for Ollama integration
+  - `examples/` - Example code and usage
+    - `test-generation-examples.md` - Examples of generated tests
+- `templates/` - Template files
+  - `test-templates.json` - Templates for test generation
+  - `custom/` - Custom templates
+    - `test-templates.json` - Custom test templates
 - `scripts/` - Development scripts
   - `tdd.js` - TDD helper script
   - `create-test.js` - Test generator script
   - `identify-green-pairs.js` - GREEN code-test pairs identification script
+  - `generate-tests.js` - Procedural test generator script
+  - `generate-coverage-tests.js` - Coverage-based test generator script
+  - `generate-ai-tests.js` - AI-powered test generator script
 - `.devcontainer/` - Development container configuration
 - `.github/` - GitHub workflows and templates
   - `workflows/` - GitHub Actions workflows
@@ -273,9 +355,21 @@ The project includes several UI components for interacting with MCP servers and 
   - View tool details
 - **Status**: Partially implemented, TypeScript errors fixed
 
+### OllamaConfigView
+- **Purpose**: Provides a UI for configuring Ollama settings
+- **Features**:
+  - Configure Ollama model and endpoint
+  - Test connection to Ollama
+  - Dynamically load available models
+  - Configure temperature and max tokens
+  - Configure system prompt
+  - Support for multiple LLM providers (framework in place)
+- **Status**: Fully implemented and tested
+
 ### UI Components Development Status
 - All TypeScript errors have been fixed
 - The UI components are partially implemented and now compile successfully
+- The Ollama Configuration View is fully implemented and tested
 - The extension can be packaged into a VSIX file
 - The package size has been reduced by adding a .vscodeignore file
 - The extension is now bundled with webpack for better performance
@@ -301,12 +395,20 @@ The project includes several UI components for interacting with MCP servers and 
 - Current package size: 1.62 MB (reduced from 3.68 MB)
 - Current file count: 222 (reduced from 2150)
 
-### Next Steps for UI Components
-1. Complete the implementation of the UI components
+### Next Steps
+1. Complete the implementation of the remaining UI components
 2. Add more tests for the UI components
 3. Implement the skipped tests
-4. Integrate with Ollama for local LLM-powered agents
-5. Install the VSIX file in VS Code for testing
+4. Complete the integration with Ollama for local LLM-powered agents:
+   - Implement streaming responses from Ollama
+   - Add model management features (pulling, removing models)
+   - Enhance tool integration with Ollama
+5. Improve the MCP Bridge implementation:
+   - Complete the Tool Registry implementation
+   - Complete the MCP Bridge implementation
+   - Complete the MCP Bridge Manager implementation
+6. Install the VSIX file in VS Code for testing
+7. Add end-to-end tests for the Ollama integration
 
 ## Documentation Requirements
 - README.md with project overview and setup instructions

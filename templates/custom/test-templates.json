@@ -1,0 +1,18 @@
+{
+  "custom-tdd": {
+    "name": "Custom TDD Template",
+    "description": "Custom template for Test-Driven Development",
+    "extends": "tdd",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n * @custom This is a custom template\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   * \n   * @function {{functionName}}\n   * @custom This is a custom test template\n   */\n  test('{{functionName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    {{#if returnType !== 'void'}}\n    // Additional assertions for specific return type\n    {{/if}}\n  });\n"
+  },
+  "ai-powered": {
+    "name": "AI-Powered Test Template",
+    "description": "Template for AI-powered test generation",
+    "extends": "enhanced",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n * @ai-powered This test was generated with AI assistance\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @returns {{{returnType}}} Return value\n   * @ai-description {{aiDescription}}\n   */\n  test('{{functionName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    // AI-generated assertions\n    {{aiGeneratedAssertions}}\n  });\n",
+    "errorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @throws {Error} Expected error\n   * @ai-description {{aiErrorDescription}}\n   */\n  test('{{functionName.camelCase}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n    \n    // AI-generated error assertions\n    {{aiGeneratedErrorAssertions}}\n  });\n",
+    "edgeCaseTestTemplate": "  /**\n   * {{testTag}}b: Test that {{functionName}}() handles edge cases correctly\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters with edge case values\n   * @ai-edge-case {{edgeCaseDescription}}\n   */\n  test('{{functionName.camelCase}}() should handle edge cases correctly', {{asyncPrefix}}() => {\n    // Arrange - Edge case: {{edgeCaseDescription}}\n    {{edgeCaseMocks}}\n\n    // Act\n    {{edgeCaseActCode}}\n\n    // Assert\n    {{edgeCaseAssertion}}\n  });\n"
+  }
+}

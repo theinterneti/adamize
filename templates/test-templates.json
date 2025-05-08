@@ -1,0 +1,66 @@
+{
+  "default": {
+    "name": "Default Test Template",
+    "description": "Default test template for TypeScript files",
+    "fileTemplate": "import * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  // {{testTag}}: Test that {{functionName}}() works correctly\n  test('{{functionName}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "errorTestTemplate": "  // {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n  test('{{functionName}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n",
+    "classTestTemplate": "  // {{testTag}}: Test that {{className}} class works correctly\n  test('{{className}} class should be instantiable', () => {\n    // Arrange & Act\n    const instance = new {{className}}();\n\n    // Assert\n    assert.ok(instance);\n  });\n",
+    "methodTestTemplate": "  // {{testTag}}: Test that {{className}}.{{methodName}}() works correctly\n  test('{{className}}.{{methodName}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "methodErrorTestTemplate": "  // {{testTag}}a: Test that {{className}}.{{methodName}}() handles errors gracefully\n  test('{{className}}.{{methodName}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n"
+  },
+  "jest": {
+    "name": "Jest Test Template",
+    "description": "Test template for Jest",
+    "fileTemplate": "import {{imports}}\n\ndescribe('{{suiteName}}', () => {\n  {{setupVars}}\n  \n  beforeEach(() => {\n    {{setupCode}}\n  });\n  \n  afterEach(() => {\n    jest.resetAllMocks();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  // {{testTag}}: Test that {{functionName}}() works correctly\n  it('should {{functionName}} correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "errorTestTemplate": "  // {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n  it('should handle errors in {{functionName}} gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n",
+    "classTestTemplate": "  // {{testTag}}: Test that {{className}} class works correctly\n  it('should instantiate {{className}} class', () => {\n    // Arrange & Act\n    const instance = new {{className}}();\n\n    // Assert\n    expect(instance).toBeDefined();\n  });\n",
+    "methodTestTemplate": "  // {{testTag}}: Test that {{className}}.{{methodName}}() works correctly\n  it('should {{methodName}} correctly', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "methodErrorTestTemplate": "  // {{testTag}}a: Test that {{className}}.{{methodName}}() handles errors gracefully\n  it('should handle errors in {{methodName}} gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n"
+  },
+  "tdd": {
+    "name": "TDD Template",
+    "description": "Test template for Test-Driven Development",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   */\n  test('{{functionName}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "errorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n   */\n  test('{{functionName}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n",
+    "classTestTemplate": "  /**\n   * {{testTag}}: Test that {{className}} class works correctly\n   */\n  test('{{className}} class should be instantiable', () => {\n    // Arrange & Act\n    const instance = new {{className}}();\n\n    // Assert\n    assert.ok(instance);\n  });\n",
+    "methodTestTemplate": "  /**\n   * {{testTag}}: Test that {{className}}.{{methodName}}() works correctly\n   */\n  test('{{className}}.{{methodName}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n  });\n",
+    "methodErrorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{className}}.{{methodName}}() handles errors gracefully\n   */\n  test('{{className}}.{{methodName}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n  });\n"
+  },
+  "enhanced": {
+    "name": "Enhanced Test Template",
+    "description": "Enhanced test template with advanced variable support and edge case handling",
+    "extends": "tdd",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @returns {{{returnType}}} Return value\n   */\n  test('{{functionName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    {{#if returnType !== 'void'}}\n    // Additional assertions for specific return type\n    {{/if}}\n  });\n",
+    "errorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @throws {Error} Expected error\n   */\n  test('{{functionName.camelCase}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n    \n    // Verify error handling\n    {{#if hasErrorHandling}}\n    // Verify error was handled correctly\n    {{/if}}\n  });\n",
+    "classTestTemplate": "  /**\n   * {{testTag}}: Test that {{className}} class works correctly\n   * \n   * @class {{className}}\n   */\n  test('{{className.pascalCase}} class should be instantiable', () => {\n    // Arrange & Act\n    const instance = new {{className}}();\n\n    // Assert\n    assert.ok(instance);\n    assert.strictEqual(instance.constructor.name, '{{className}}');\n  });\n",
+    "methodTestTemplate": "  /**\n   * {{testTag}}: Test that {{className}}.{{methodName}}() works correctly\n   * \n   * @method {{className}}#{{methodName}}\n   * @param {{{parameterList}}} Parameters\n   * @returns {{{returnType}}} Return value\n   */\n  test('{{className.camelCase}}.{{methodName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    {{#if returnType !== 'void'}}\n    // Additional assertions for specific return type\n    {{/if}}\n  });\n",
+    "methodErrorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{className}}.{{methodName}}() handles errors gracefully\n   * \n   * @method {{className}}#{{methodName}}\n   * @param {{{parameterList}}} Parameters\n   * @throws {Error} Expected error\n   */\n  test('{{className.camelCase}}.{{methodName.camelCase}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    const instance = new {{className}}();\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n    \n    // Verify error handling\n    {{#if hasErrorHandling}}\n    // Verify error was handled correctly\n    {{/if}}\n  });\n",
+    "edgeCaseTestTemplate": "  /**\n   * {{testTag}}b: Test that {{functionName}}() handles edge cases correctly\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters with edge case values\n   */\n  test('{{functionName.camelCase}}() should handle edge cases correctly', {{asyncPrefix}}() => {\n    // Arrange - Edge case: {{edgeCaseDescription}}\n    {{edgeCaseMocks}}\n\n    // Act\n    {{edgeCaseActCode}}\n\n    // Assert\n    {{edgeCaseAssertion}}\n  });\n",
+    "methodEdgeCaseTestTemplate": "  /**\n   * {{testTag}}b: Test that {{className}}.{{methodName}}() handles edge cases correctly\n   * \n   * @method {{className}}#{{methodName}}\n   * @param {{{parameterList}}} Parameters with edge case values\n   */\n  test('{{className.camelCase}}.{{methodName.camelCase}}() should handle edge cases correctly', {{asyncPrefix}}() => {\n    // Arrange - Edge case: {{edgeCaseDescription}}\n    const instance = new {{className}}();\n    {{edgeCaseMocks}}\n\n    // Act\n    {{edgeCaseActCode}}\n\n    // Assert\n    {{edgeCaseAssertion}}\n  });\n"
+  },
+  "ai-assisted": {
+    "name": "AI-Assisted Test Template",
+    "description": "Template for AI-assisted test generation",
+    "extends": "enhanced",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n * @generated AI-assisted test generation\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @returns {{{returnType}}} Return value\n   * @ai_description {{aiDescription}}\n   */\n  test('{{functionName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    {{aiGeneratedAssertions}}\n  });\n",
+    "errorTestTemplate": "  /**\n   * {{testTag}}a: Test that {{functionName}}() handles errors gracefully\n   * \n   * @function {{functionName}}\n   * @param {{{parameterList}}} Parameters\n   * @throws {Error} Expected error\n   * @ai_description {{aiErrorDescription}}\n   */\n  test('{{functionName.camelCase}}() should handle errors gracefully', {{asyncPrefix}}() => {\n    // Arrange\n    {{errorSetup}}\n\n    // Act & Assert\n    {{assertCode}}\n    \n    {{aiGeneratedErrorAssertions}}\n  });\n"
+  },
+  "config": {
+    "customTemplateDirectories": [
+      ".vscode/templates",
+      "templates/custom"
+    ],
+    "defaultTemplate": "tdd",
+    "variableTransformers": {
+      "camelCase": "function(str) { return str.charAt(0).toLowerCase() + str.slice(1); }",
+      "pascalCase": "function(str) { return str.charAt(0).toUpperCase() + str.slice(1); }",
+      "snakeCase": "function(str) { return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).toLowerCase(); }",
+      "kebabCase": "function(str) { return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).toLowerCase(); }"
+    }
+  }
+}

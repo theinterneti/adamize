@@ -1,0 +1,9 @@
+{
+  "vscode-custom": {
+    "name": "VS Code Custom Template",
+    "description": "Custom template for VS Code extension development",
+    "extends": "enhanced",
+    "fileTemplate": "/**\n * Test suite for {{fileName}}\n * \n * @module {{moduleName}}\n * @requires assert\n * @requires sinon\n * @vscode-custom This is a VS Code custom template\n */\n\nimport * as assert from 'assert';\nimport * as sinon from 'sinon';\nimport * as vscode from 'vscode';\n{{imports}}\n\nsuite('{{suiteName}}', () => {\n  // Stubs and mocks\n  {{setupVars}}\n  \n  // Setup before each test\n  setup(() => {\n    {{setupCode}}\n  });\n  \n  // Teardown after each test\n  teardown(() => {\n    // Restore all stubs\n    sinon.restore();\n  });\n\n  {{tests}}\n});\n",
+    "testTemplate": "  /**\n   * {{testTag}}: Test that {{functionName}}() works correctly\n   * \n   * @function {{functionName}}\n   * @vscode-custom This is a VS Code custom test template\n   */\n  test('{{functionName.camelCase}}() should work correctly', {{asyncPrefix}}() => {\n    // Arrange\n    {{mocks}}\n\n    // Act\n    {{actCode}}\n\n    // Assert\n    {{assertion}}\n    \n    {{#if returnType !== 'void'}}\n    // Additional assertions for specific return type\n    {{/if}}\n  });\n"
+  }
+}
