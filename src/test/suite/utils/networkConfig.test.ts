@@ -189,25 +189,71 @@ suite('Network Configuration Test Suite', () => {
     }, /Unknown service type/);
   });
 
-  // Skip environment-specific URL tests since we can't access private functions
-  test.skip('getDevServiceUrl() should return correct URL for Augment service', () => {
-    // This test is skipped because we can't access private functions
+  // Tests for environment-specific URL functions by testing the getServiceUrl function with different environments
+  test('getServiceUrl() should return correct URL for Augment service in Development environment', () => {
+    // Arrange
+    sinon.stub(networkConfig, 'getCurrentEnvironment').returns(Environment.Development);
+
+    // Act
+    const result = networkConfig.getServiceUrl(ServiceType.Augment);
+
+    // Assert
+    assert.strictEqual(result, 'http://host.docker.internal:8000');
   });
 
-  test.skip('getDevServiceUrl() should return correct URL for ChromaDB service', () => {
-    // This test is skipped because we can't access private functions
+  test('getServiceUrl() should return correct URL for ChromaDB service in Development environment', () => {
+    // Arrange
+    sinon.stub(networkConfig, 'getCurrentEnvironment').returns(Environment.Development);
+
+    // Act
+    const result = networkConfig.getServiceUrl(ServiceType.ChromaDB);
+
+    // Assert
+    assert.strictEqual(result, 'http://chroma:8000');
   });
 
-  test.skip('getTestServiceUrl() should return correct URL for MCPMemory service', () => {
-    // This test is skipped because we can't access private functions
+  test('getServiceUrl() should return correct URL for MCPMemory service in Testing environment', () => {
+    // Arrange
+    sinon.stub(networkConfig, 'getCurrentEnvironment').returns(Environment.Testing);
+
+    // Act
+    const result = networkConfig.getServiceUrl(ServiceType.MCPMemory);
+
+    // Assert
+    // Check if the result contains the expected string
+    assert.ok(result.includes('mcp/memory'));
   });
 
-  test.skip('getProdServiceUrl() should return correct URL for MCPNeo4jMemory service', () => {
-    // This test is skipped because we can't access private functions
+  test('getServiceUrl() should return correct URL for MCPNeo4jMemory service in Production environment', () => {
+    // Arrange
+    sinon.stub(networkConfig, 'getCurrentEnvironment').returns(Environment.Production);
+
+    // Act
+    const result = networkConfig.getServiceUrl(ServiceType.MCPNeo4jMemory);
+
+    // Assert
+    // Check if the result contains the expected string
+    assert.ok(result.includes('mcp/neo4j-memory'));
   });
 
-  // Skip HOST_DOCKER_INTERNAL tests since we can't access private functions
-  test.skip('getDevServiceUrl() should use HOST_DOCKER_INTERNAL environment variable if set', () => {
-    // This test is skipped because we can't access private functions
+  test('getServiceUrl() should use HOST_DOCKER_INTERNAL environment variable if set in Development environment', () => {
+    // Arrange
+    // Save original process.env
+    const originalEnv = process.env.HOST_DOCKER_INTERNAL;
+
+    // Set HOST_DOCKER_INTERNAL environment variable
+    processEnvStub.value({ HOST_DOCKER_INTERNAL: 'custom-docker-host' });
+
+    // Set environment to Development
+    sinon.stub(networkConfig, 'getCurrentEnvironment').returns(Environment.Development);
+
+    // Act
+    const result = networkConfig.getServiceUrl(ServiceType.Augment);
+
+    // Assert
+    assert.strictEqual(result, 'http://custom-docker-host:8000');
+
+    // Restore original environment variable
+    processEnvStub.value({ HOST_DOCKER_INTERNAL: originalEnv });
   });
 });

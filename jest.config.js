@@ -7,6 +7,7 @@ module.exports = {
     '!src/test/**',
     '!**/node_modules/**',
     '!**/out/**',
+    '!**/.vscode-test/**',
   ],
   coverageThreshold: {
     global: {
@@ -25,14 +26,32 @@ module.exports = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    '/node_modules/',
+    '/.vscode-test/'
+  ],
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
   modulePathIgnorePatterns: [
     '<rootDir>/runtipi/',
-    '<rootDir>/tipi/'
+    '<rootDir>/tipi/',
+    '<rootDir>/.vscode-test/'
+  ],
+  watchPathIgnorePatterns: [
+    '<rootDir>/.vscode-test/'
   ],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   verbose: true,
   testTimeout: 30000,
+  // Haste configuration to handle module name collisions
+  haste: {
+    forceNodeFilesystemAPI: true,
+    throwOnModuleCollision: false,
+  },
+  // Use .jestignore file
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.vscode-test/'
+  ],
 };

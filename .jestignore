@@ -1,0 +1,6 @@
+# Jest ignore file
+.vscode-test/
+node_modules/
+out/
+dist/
+coverage/

@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
+import { createOutputChannelStub } from '../helpers/testHelpers';
 
 suite('Extension Test Suite', () => {
   vscode.window.showInformationMessage('Starting extension tests');
@@ -9,18 +10,54 @@ suite('Extension Test Suite', () => {
     assert.ok(vscode.extensions.getExtension('adamize.adamize'));
   });
 
-  // Skip this test when running with Jest
-  // This test requires the actual VS Code API
-  test.skip('Should register commands', async () => {
-    // Get all registered commands
-    const commands = await vscode.commands.getCommands();
+  // Test command registration using mocks
+  test('Should register commands', async () => {
+    // Import the extension module directly in the test to avoid issues with mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const extension = require('../../extension');
 
-    // Check if our commands are registered
-    assert.ok(commands.includes('adamize.showWelcome'));
-    assert.ok(commands.includes('adamize.connectMCP'));
-    assert.ok(commands.includes('adamize.listMCPTools'));
-    assert.ok(commands.includes('adamize.runTests'));
-    assert.ok(commands.includes('adamize.runTestsWithCoverage'));
+    // Create stubs for VS Code commands
+    const registerCommandStub = sinon.stub(vscode.commands, 'registerCommand').returns({
+      dispose: sinon.stub()
+    });
+
+    // Create stubs for VS Code window functions
+    sinon.stub(vscode.window, 'createOutputChannel').returns(createOutputChannelStub());
+
+    // Add createTreeView to vscode.window if it doesn't exist
+    if (!vscode.window.createTreeView) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vscode.window as any).createTreeView = () => ({});
+    }
+
+    // Now we can stub it
+    sinon.stub(vscode.window, 'createTreeView').returns({
+      dispose: sinon.stub()
+    });
+
+    // We already imported createOutputChannelStub at the top of the file
+
+    // Create a mock extension context
+    const mockContext = {
+      subscriptions: [],
+      globalState: {
+        get: sinon.stub().returns(true),
+        update: sinon.stub().resolves()
+      }
+    };
+
+    // Call the activate function
+    extension.activate(mockContext);
+
+    // Check if our commands were registered
+    assert.ok(registerCommandStub.calledWith('adamize.showWelcome'));
+    assert.ok(registerCommandStub.calledWith('adamize.connectMCP'));
+    assert.ok(registerCommandStub.calledWith('adamize.listMCPTools'));
+    assert.ok(registerCommandStub.calledWith('adamize.runTests'));
+    assert.ok(registerCommandStub.calledWith('adamize.runTestsWithCoverage'));
+
+    // Restore stubs
+    sinon.restore();
   });
 
   test('showWelcomeMessage should show message on first activation', () => {

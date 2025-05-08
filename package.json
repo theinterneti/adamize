@@ -278,7 +278,7 @@
     "test:unit:watch": "jest --watch",
     "test:integration": "UNIT_TESTS_ONLY=false node ./out/test/runTest.js",
     "test:coverage": "nyc --reporter=lcov --reporter=text node ./out/test/runTest.js",
-    "test:jest:coverage": "jest --coverage",
+    "test:jest:coverage": "jest --coverage --no-watchman",
     "test:watch": "nodemon --watch src --ext ts --exec 'npm test'",
     "tdd": "node scripts/tdd.js",
     "tdd:mcp": "node scripts/tdd.js --watch-path=src/mcp --test-path=src/test/suite",
