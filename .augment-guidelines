@@ -45,6 +45,16 @@ This project follows a STRICT test-driven development workflow. You MUST follow 
 - Strict TypeScript configuration
 - Comprehensive type definitions
 - Requirement tags for traceability
+- Always use the newest possible versions of all dependencies
+
+### Dependency Management Philosophy
+- Use the newest possible versions of all dependencies
+- Update dependencies one at a time, checking integration after each update
+- Prefer explicit versioning in package.json
+- Keep dependencies up-to-date with security patches
+- Regularly review and update dependencies
+- Adapt code to work with new major versions rather than staying on older versions
+- Document breaking changes and migration steps
 
 ### Tagging System
 - `REQ-XXX-YYY` - Requirement tags (e.g., REQ-MCP-001)
@@ -268,12 +278,34 @@ The project includes several UI components for interacting with MCP servers and 
 - The UI components are partially implemented and now compile successfully
 - The extension can be packaged into a VSIX file
 - The package size has been reduced by adding a .vscodeignore file
+- The extension is now bundled with webpack for better performance
+
+### Dependency Management
+- The project uses the newest possible versions of all dependencies
+- Dependencies should be updated one at a time, checking integration after each update
+- Current dependency versions (as of last update):
+  - TypeScript: 5.8.3
+  - ESLint: 9.26.0
+  - @vscode/vsce: 3.3.2
+  - Jest: 29.7.0
+  - Webpack: 5.91.0
+- ESLint 9 configuration is in eslint.config.js using the new flat config format
+- VS Code engine version is set to match the @types/vscode version
+
+### Extension Bundling
+- The extension is bundled using webpack to improve performance
+- Webpack configuration is in webpack.config.js
+- The bundled output is in the dist directory
+- The main entry point in package.json points to dist/extension.js
+- The .vscodeignore file excludes unnecessary files from the package
+- Current package size: 1.62 MB (reduced from 3.68 MB)
+- Current file count: 222 (reduced from 2150)
 
 ### Next Steps for UI Components
 1. Complete the implementation of the UI components
 2. Add more tests for the UI components
 3. Implement the skipped tests
-4. Bundle the extension for better performance
+4. Integrate with Ollama for local LLM-powered agents
 5. Install the VSIX file in VS Code for testing
 
 ## Documentation Requirements
