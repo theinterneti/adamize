@@ -6,6 +6,7 @@ import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 import { MCPServerExplorerProvider } from './ui/mcpServerExplorerView';
+import { MCPChatViewProvider } from './ui/mcpChatView';
 import { MCPBridgeManager } from './mcp/mcpBridgeManager';
 
 // Global variables
@@ -15,6 +16,7 @@ let memoryClient: Neo4jMemoryClient | undefined;
 let enhancedMemoryClient: EnhancedNeo4jMemoryClient | undefined;
 let mcpBridgeManager: MCPBridgeManager | undefined;
 let mcpServerExplorerProvider: MCPServerExplorerProvider | undefined;
+let mcpChatViewProvider: MCPChatViewProvider | undefined;
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -185,6 +187,9 @@ export function activate(context: vscode.ExtensionContext) {
     showCollapseAll: true
   });
 
+  // Initialize MCP Chat View Provider
+  mcpChatViewProvider = new MCPChatViewProvider(context, mcpBridgeManager, outputChannel);
+
   // Add commands to subscriptions
   context.subscriptions.push(showWelcomeCommand);
   context.subscriptions.push(connectMCPCommand);
@@ -208,6 +213,10 @@ export function deactivate() {
     mcpBridgeManager.dispose();
     mcpBridgeManager = undefined;
   }
+
+  // Clean up other providers
+  mcpServerExplorerProvider = undefined;
+  mcpChatViewProvider = undefined;
 }
 
 /**

@@ -203,6 +203,12 @@
         "title": "Show Tool Details",
         "category": "Adamize",
         "icon": "$(info)"
+      },
+      {
+        "command": "adamize.openMCPChat",
+        "title": "Open MCP Chat",
+        "category": "Adamize",
+        "icon": "$(comment)"
       }
     ],
     "menus": {
@@ -233,6 +239,11 @@
           "command": "adamize.showToolDetails",
           "when": "view == mcpServerExplorer && viewItem == mcpTool",
           "group": "inline"
+        },
+        {
+          "command": "adamize.openMCPChat",
+          "when": "view == mcpServerExplorer && viewItem == mcpServer-running",
+          "group": "navigation"
         }
       ]
     }
