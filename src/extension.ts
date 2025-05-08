@@ -1,16 +1,20 @@
 // The module 'vscode' contains the VS Code extensibility API
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/mcpClient';
-// import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
+import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
 import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
+import { MCPServerExplorerProvider } from './ui/mcpServerExplorerView';
+import { MCPBridgeManager } from './mcp/mcpBridgeManager';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
-// let _enhancedMcpClient: EnhancedMCPClient | undefined;
+let enhancedMcpClient: EnhancedMCPClient | undefined;
 let memoryClient: Neo4jMemoryClient | undefined;
 let enhancedMemoryClient: EnhancedNeo4jMemoryClient | undefined;
+let mcpBridgeManager: MCPBridgeManager | undefined;
+let mcpServerExplorerProvider: MCPServerExplorerProvider | undefined;
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -168,6 +172,19 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Initialize MCP Bridge Manager
+  const outputChannel = vscode.window.createOutputChannel('Adamize MCP Bridge');
+  mcpBridgeManager = new MCPBridgeManager(context, outputChannel);
+
+  // Initialize MCP Server Explorer View
+  mcpServerExplorerProvider = new MCPServerExplorerProvider(context, mcpBridgeManager, outputChannel);
+
+  // Register MCP Server Explorer View
+  const mcpServerExplorerView = vscode.window.createTreeView('mcpServerExplorer', {
+    treeDataProvider: mcpServerExplorerProvider,
+    showCollapseAll: true
+  });
+
   // Add commands to subscriptions
   context.subscriptions.push(showWelcomeCommand);
   context.subscriptions.push(connectMCPCommand);
@@ -175,6 +192,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(searchMemoryCommand);
   context.subscriptions.push(runTestsCommand);
   context.subscriptions.push(runTestsWithCoverageCommand);
+  context.subscriptions.push(mcpServerExplorerView);
+  context.subscriptions.push(outputChannel);
 
   // Show welcome message on first activation
   showWelcomeMessage(context);
@@ -183,6 +202,12 @@ export function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() {
   console.info('Deactivating Adamize extension');
+
+  // Dispose MCP Bridge Manager
+  if (mcpBridgeManager) {
+    mcpBridgeManager.dispose();
+    mcpBridgeManager = undefined;
+  }
 }
 
 /**
