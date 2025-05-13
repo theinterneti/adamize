@@ -14,7 +14,8 @@ import { MCPServerExplorerProvider } from './ui/mcpServerExplorerView';
 import { MemoryGraphViewProvider } from './ui/memoryGraphView';
 import { ModelManagerViewProvider } from './ui/modelManagerView';
 import { OllamaConfigViewProvider } from './ui/ollamaConfigView';
-import { ModelManager } from './utils/modelManager';
+import { PresetManagerViewProvider } from './ui/presetManagerView';
+import { ModelManager } from './utils/modelManager.new';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
 import { PresetManager } from './utils/presetManager';
 
@@ -37,6 +38,8 @@ let _memoryGraphViewProvider: MemoryGraphViewProvider | undefined;
 let _ollamaConfigViewProvider: OllamaConfigViewProvider | undefined;
 // @ts-ignore
 let _modelManagerViewProvider: ModelManagerViewProvider | undefined;
+// @ts-ignore
+let _presetManagerViewProvider: PresetManagerViewProvider | undefined;
 // @ts-ignore
 let _coverageVisualizationProvider: CoverageVisualizationProvider | undefined;
 /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -300,6 +303,22 @@ export function activate(context: vscode.ExtensionContext): void {
       )
     );
 
+    // Initialize and register Preset Manager View
+    _presetManagerViewProvider = new PresetManagerViewProvider(
+      context.extensionUri,
+      presetManager,
+      modelManager,
+      outputChannel
+    );
+
+    // Register Preset Manager View
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(
+        PresetManagerViewProvider.viewType,
+        _presetManagerViewProvider
+      )
+    );
+
     // Register Model Manager commands
     context.subscriptions.push(
       vscode.commands.registerCommand('adamize.refreshModels', async () => {
@@ -487,6 +506,8 @@ export function deactivate(): void {
   _mcpChatViewProvider = undefined;
   _memoryGraphViewProvider = undefined;
   _ollamaConfigViewProvider = undefined;
+  _modelManagerViewProvider = undefined;
+  _presetManagerViewProvider = undefined;
   _coverageVisualizationProvider = undefined;
   enhancedMemoryClient = undefined;
 }

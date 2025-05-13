@@ -5,11 +5,11 @@
  * @requirement REQ-MODEL-INT-002 Test ModelManagerViewProvider integration with ModelManager
  */
 
-import * as vscode from 'vscode';
 import { expect } from '@jest/globals';
+import * as vscode from 'vscode';
+import { ModelOperationStatus } from '../../../types/modelTypes';
 import { ModelManagerViewProvider } from '../../../ui/modelManagerView';
 import ModelManager, { IModelInfo } from '../../../utils/modelManager';
-import { ModelOperationStatus } from '../../../types/modelTypes';
 
 // Mock the ModelManager
 jest.mock('../../../utils/modelManager');
@@ -20,7 +20,7 @@ describe('ModelManagerViewProvider Integration Tests', () => {
   let mockOutputChannel: vscode.OutputChannel;
   let mockWebviewView: vscode.WebviewView;
   let mockExtensionUri: vscode.Uri;
-  
+
   // Sample model data for testing
   const sampleModels: IModelInfo[] = [
     {
@@ -30,7 +30,7 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       size: 1000,
       isLocal: true,
       capabilities: ['text-generation'],
-      provider: 'ollama'
+      provider: 'ollama',
     },
     {
       id: 'model2',
@@ -39,10 +39,10 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       size: 2000,
       isLocal: true,
       capabilities: ['text-generation'],
-      provider: 'ollama'
-    }
+      provider: 'ollama',
+    },
   ];
-  
+
   beforeEach(() => {
     // Create mock output channel
     mockOutputChannel = {
@@ -52,21 +52,24 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       clear: jest.fn(),
       show: jest.fn(),
       hide: jest.fn(),
-      dispose: jest.fn()
+      dispose: jest.fn(),
     } as unknown as jest.Mocked<vscode.OutputChannel>;
-    
+
     // Create mock extension URI
     mockExtensionUri = vscode.Uri.file('/test/path');
-    
+
     // Create mock model manager
-    mockModelManager = new ModelManager({} as vscode.ExtensionContext, mockOutputChannel) as jest.Mocked<ModelManager>;
+    mockModelManager = new ModelManager(
+      {} as vscode.ExtensionContext,
+      mockOutputChannel
+    ) as jest.Mocked<ModelManager>;
     mockModelManager.listModels = jest.fn().mockResolvedValue(sampleModels);
-    mockModelManager.getModel = jest.fn().mockImplementation((id) => {
+    mockModelManager.getModel = jest.fn().mockImplementation(id => {
       return Promise.resolve(sampleModels.find(model => model.id === id));
     });
     mockModelManager.pullOllamaModel = jest.fn().mockResolvedValue(undefined);
     mockModelManager.removeOllamaModel = jest.fn().mockResolvedValue(undefined);
-    
+
     // Create mock webview view
     mockWebviewView = {
       webview: {
@@ -75,7 +78,7 @@ describe('ModelManagerViewProvider Integration Tests', () => {
         onDidReceiveMessage: jest.fn(),
         postMessage: jest.fn().mockResolvedValue(true),
         asWebviewUri: jest.fn().mockImplementation(uri => uri),
-        cspSource: 'https://test.com'
+        cspSource: 'https://test.com',
       },
       onDidChangeVisibility: jest.fn(),
       onDidDispose: jest.fn(),
@@ -84,13 +87,13 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       title: 'Model Manager',
       description: 'Manage LLM models',
       badge: undefined,
-      show: jest.fn()
+      show: jest.fn(),
     } as unknown as vscode.WebviewView;
-    
+
     // Create provider
     provider = new ModelManagerViewProvider(mockExtensionUri, mockModelManager, mockOutputChannel);
   });
-  
+
   /**
    * @test TEST-MODEL-INT-002a Test that the provider refreshes models correctly
    */
@@ -101,27 +104,27 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       {} as vscode.WebviewViewResolveContext,
       {} as vscode.CancellationToken
     );
-    
+
     // Verify that the model manager was called
     expect(mockModelManager.listModels).toHaveBeenCalledTimes(1);
-    
+
     // Verify that the webview was updated
     expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         command: 'updateModels',
-        models: sampleModels
+        models: sampleModels,
       })
     );
-    
+
     // Verify that the status was updated
     expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         command: 'updateStatus',
-        refreshStatus: ModelOperationStatus.SUCCESS
+        refreshStatus: ModelOperationStatus.SUCCESS,
       })
     );
   });
-  
+
   /**
    * @test TEST-MODEL-INT-002b Test that the provider pulls models correctly
    */
@@ -132,31 +135,32 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       {} as vscode.WebviewViewResolveContext,
       {} as vscode.CancellationToken
     );
-    
+
     // Reset mock calls
     mockWebviewView.webview.postMessage = jest.fn().mockResolvedValue(true);
     mockModelManager.listModels = jest.fn().mockResolvedValue(sampleModels);
-    
+
     // Simulate message from webview
-    const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as jest.Mock).mock.calls[0][0];
+    const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as jest.Mock).mock
+      .calls[0][0];
     await messageHandler({ command: 'pull', modelName: 'new-model' });
-    
+
     // Verify that the model manager was called
     expect(mockModelManager.pullOllamaModel).toHaveBeenCalledTimes(1);
     expect(mockModelManager.pullOllamaModel).toHaveBeenCalledWith('new-model');
-    
+
     // Verify that the models were refreshed
     expect(mockModelManager.listModels).toHaveBeenCalledTimes(1);
-    
+
     // Verify that the status was updated
     expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         command: 'updateStatus',
-        pullStatus: ModelOperationStatus.SUCCESS
+        pullStatus: ModelOperationStatus.SUCCESS,
       })
     );
   });
-  
+
   /**
    * @test TEST-MODEL-INT-002c Test that the provider removes models correctly
    */
@@ -167,27 +171,44 @@ describe('ModelManagerViewProvider Integration Tests', () => {
       {} as vscode.WebviewViewResolveContext,
       {} as vscode.CancellationToken
     );
-    
+
     // Reset mock calls
     mockWebviewView.webview.postMessage = jest.fn().mockResolvedValue(true);
     mockModelManager.listModels = jest.fn().mockResolvedValue(sampleModels);
-    
+
+    // Mock window.showWarningMessage to return 'Yes'
+    const showWarningMock = jest
+      .spyOn(vscode.window, 'showWarningMessage')
+      .mockResolvedValue('Yes');
+
     // Simulate message from webview
-    const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as jest.Mock).mock.calls[0][0];
+    const messageHandler = (mockWebviewView.webview.onDidReceiveMessage as jest.Mock).mock
+      .calls[0][0];
     await messageHandler({ command: 'remove', modelName: 'model1' });
-    
+
+    // Verify that the confirmation was shown
+    expect(showWarningMock).toHaveBeenCalledWith(
+      expect.stringContaining('Are you sure you want to remove model: model1?'),
+      { modal: true },
+      'Yes',
+      'No'
+    );
+
     // Verify that the model manager was called
     expect(mockModelManager.removeOllamaModel).toHaveBeenCalledTimes(1);
     expect(mockModelManager.removeOllamaModel).toHaveBeenCalledWith('model1');
-    
+
+    // Restore the mock
+    showWarningMock.mockRestore();
+
     // Verify that the models were refreshed
     expect(mockModelManager.listModels).toHaveBeenCalledTimes(1);
-    
+
     // Verify that the status was updated
     expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         command: 'updateStatus',
-        removeStatus: ModelOperationStatus.SUCCESS
+        removeStatus: ModelOperationStatus.SUCCESS,
       })
     );
   });

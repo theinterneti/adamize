@@ -7,6 +7,8 @@
  * @implements TEST-UI-004 Show available tools for each server
  * @implements TEST-UI-005 Allow refreshing the server list
  * @implements TEST-UI-006 Allow adding new servers via a command
+ * @implements TEST-UI-007 Display tool details with schema information
+ * @implements TEST-UI-008 Support tool discovery from MCP Bridge
  */
 
 import * as assert from 'assert';
@@ -234,5 +236,104 @@ suite('MCP Server Explorer View Test Suite', () => {
       llmEndpoint: 'newModel',
       systemPrompt: 'You are a helpful assistant',
     });
+  });
+
+  // TEST-UI-007: Display tool details with schema information
+  test('should display tool details', async () => {
+    // Mock the showToolDetails method
+    const mockWebviewPanel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage: jest.fn(),
+        postMessage: jest.fn(),
+      },
+      reveal: jest.fn(),
+      dispose: jest.fn(),
+      onDidDispose: jest.fn(),
+    };
+
+    // Mock createWebviewPanel
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (vscode.window.createWebviewPanel as jest.Mock<any>).mockReturnValue(mockWebviewPanel);
+
+    // Mock the bridge's getToolRegistry method
+    const mockToolRegistry = {
+      getToolSchema: jest.fn().mockReturnValue({
+        name: 'test-tool',
+        description: 'A test tool',
+        functions: [
+          {
+            name: 'testFunction',
+            description: 'A test function',
+            parameters: {
+              type: 'object',
+              properties: {
+                param1: {
+                  type: 'string',
+                  description: 'A test parameter',
+                },
+              },
+              required: ['param1'],
+            },
+          },
+        ],
+      }),
+    };
+
+    // Mock the bridge to return the tool registry
+    const bridge = mcpBridgeManager.getBridge('bridge1');
+    bridge.getToolRegistry = jest.fn().mockReturnValue(mockToolRegistry);
+
+    // Call showToolDetails
+    await provider.showToolDetails('bridge1', 'test-tool');
+
+    // Verify that createWebviewPanel was called with the correct parameters
+    expect(vscode.window.createWebviewPanel).toHaveBeenCalledWith(
+      'toolDetails',
+      'Tool: test-tool',
+      vscode.ViewColumn.One,
+      { enableScripts: true }
+    );
+  });
+
+  // TEST-UI-008: Support tool discovery from MCP Bridge
+  test('should discover tools from MCP Bridge', async () => {
+    // Mock the bridge's getToolRegistry method
+    const mockToolRegistry = {
+      getAllTools: jest.fn().mockReturnValue([
+        {
+          name: 'test-tool-1',
+          description: 'Test tool 1',
+          schema: { functions: [{ name: 'function1' }] },
+        },
+        {
+          name: 'test-tool-2',
+          description: 'Test tool 2',
+          schema: { functions: [{ name: 'function2' }] },
+        },
+      ]),
+    };
+
+    // Mock the bridge to return the tool registry
+    const bridge = mcpBridgeManager.getBridge('bridge1');
+    bridge.getToolRegistry = jest.fn().mockReturnValue(mockToolRegistry);
+
+    // Get the tool items for the bridge
+    const toolItems = await provider.getToolItems('bridge1');
+
+    // Verify that the correct number of tools were returned
+    expect(toolItems.length).toBe(2);
+
+    // Verify the first tool item
+    expect(toolItems[0].label).toBe('test-tool-1');
+    expect(toolItems[0].description).toBe('Test tool 1');
+    expect(toolItems[0].bridgeId).toBe('bridge1');
+    expect(toolItems[0].toolName).toBe('test-tool-1');
+
+    // Verify the second tool item
+    expect(toolItems[1].label).toBe('test-tool-2');
+    expect(toolItems[1].description).toBe('Test tool 2');
+    expect(toolItems[1].bridgeId).toBe('bridge1');
+    expect(toolItems[1].toolName).toBe('test-tool-2');
   });
 });

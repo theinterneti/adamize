@@ -107,9 +107,15 @@ Adapts ollama-mcp-bridge for VS Code extension use, enabling LLM-powered agents.
 - Bridge Types ✅
 - MCP Bridge Client ✅
 - LLM Client ✅
-- Tool Registry (partial)
-- MCP Bridge (partial)
-- MCP Bridge Manager (partial)
+- Tool Registry (partial) - Needs completion for tool detection and instructions generation
+- MCP Bridge (partial) - Needs completion for tool execution and conversation context
+- MCP Bridge Manager (partial) - Needs completion for bridge lifecycle management
+
+### Implementation Priority
+
+1. Complete Tool Registry - Tool detection, format instructions, example arguments
+2. Complete MCP Bridge - Tool execution, conversation context, streaming responses
+3. Complete Bridge Manager - Bridge creation, lifecycle management, configuration
 
 ## Ollama Integration
 
@@ -130,6 +136,38 @@ Enables local LLMs through Ollama for various features.
 - Dedicated Model Manager view ✅
 - Model Configuration Presets ✅
 - MCP Tool Integration ✅
+
+## Model Management Architecture
+
+The model management system follows a modular, maintainable architecture:
+
+### Interface Hierarchy
+
+- `IModelOperationHandler`: Interface for model operations
+- Provider-specific implementations:
+  - `OllamaModelHandler`: For Ollama models
+  - `LocalModelHandler`: For local models
+  - `HuggingFaceModelHandler`: (Planned) For HuggingFace models
+
+### Factory Pattern
+
+- `ModelHandlerFactory`: Creates and manages handler instances
+  - `createHandler(providerType)`: Creates a handler for a specific provider
+  - `getAllHandlers()`: Returns all available handlers
+
+### Service Layer
+
+- `ModelDiscoveryService`: Handles discovering models
+- `ModelManagementService`: Handles model operations (pull, remove)
+- `ModelConfigurationService`: Handles model configuration presets
+
+### Refactored ModelManager
+
+- Uses the service layer and handlers for model operations
+- Maintains backward compatibility with existing interfaces
+- Provides improved error handling and progress reporting
+
+See `docs/features/model-management-architecture.md` for detailed documentation.
 
 ## Notion Integration
 
@@ -162,8 +200,8 @@ Uses a DevContainer with Node.js, TypeScript, ESLint, VS Code extension tools, D
 ## UI Components
 
 - MemoryGraphView: Memory graph visualization (partial)
-- MCPChatView: Chat interface for LLMs (partial)
-- MCPServerExplorerView: MCP server management (partial)
+- MCPChatView: Chat interface for LLMs (partial) - Needs completion for streaming responses
+- MCPServerExplorerView: MCP server management (partial) - Needs completion for tool discovery
 - OllamaConfigView: Ollama settings configuration ✅
 
 ## Extension Bundling
@@ -172,15 +210,31 @@ Uses a DevContainer with Node.js, TypeScript, ESLint, VS Code extension tools, D
 - Output in dist directory
 - Current package size: 1.62 MB (reduced from 3.68 MB)
 
-## Next Steps
+## Implementation Roadmap
 
-1. Complete remaining UI components
-2. Add more UI component tests
+### Phase 1: Core Functionality (High Priority)
+
+1. Complete MCPToolRegistry - Tool detection, instructions generation, example arguments
+2. Complete MCPBridge - Tool execution, conversation context, streaming responses
+3. Complete MCPBridgeManager - Bridge lifecycle management, configuration
+
+### Phase 2: UI Components (Medium Priority)
+
+1. Complete MCPChatView - Message handling, streaming, conversation history
+2. Complete MCPServerExplorerView - Server management, tool discovery
+3. Add UI component tests
+
+### Phase 3: Integration and Testing (Medium Priority)
+
+1. Create integration tests for MCP Bridge components
+2. Create end-to-end tests for extension functionality
 3. Implement skipped tests
-4. Complete Ollama integration
-5. Improve MCP Bridge implementation
-6. Complete Notion integration
-7. Add end-to-end tests
+
+### Phase 4: Documentation and Configuration (Low Priority)
+
+1. Update documentation for all components
+2. Add configuration options for MCP Bridge
+3. Create user guides for extension
 
 ## Documentation Requirements
 

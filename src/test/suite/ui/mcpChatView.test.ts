@@ -8,6 +8,8 @@
  * @implements TEST-UI-105 Maintain conversation history
  * @implements TEST-UI-106 Allow clearing the conversation
  * @implements TEST-UI-107 Allow selecting different MCP servers for the conversation
+ * @implements TEST-UI-108 Support streaming responses with progress indicators
+ * @implements TEST-UI-109 Handle tool calls during streaming
  */
 
 import * as vscode from 'vscode';
@@ -366,6 +368,126 @@ suite('MCP Chat View Test Suite', () => {
         { id: 'bridge2', name: 'mistral (stopped)', status: 'stopped' },
       ],
       activeBridgeId: 'bridge2',
+    });
+  });
+
+  // TEST-UI-108: Support streaming responses with progress indicators
+  test('should support streaming responses with progress indicators', async () => {
+    const panel = await provider.createOrShowPanel();
+
+    // Mock the streamMessage method on the bridge
+    const bridge = mcpBridgeManager.getBridge('bridge1');
+    bridge.streamMessage = jest.fn().mockImplementation(async (message, handlers) => {
+      // Simulate streaming chunks
+      handlers.onContent('Hello');
+      handlers.onContent(' world');
+      handlers.onContent('!');
+      handlers.onComplete();
+    });
+
+    // Mock the supportsStreaming method to return true
+    jest.spyOn(provider as any, 'supportsStreaming').mockReturnValue(true);
+
+    // Generate a unique message ID for testing
+    const mockMessageId = 'test-message-id';
+    jest.spyOn(provider as any, 'generateMessageId').mockReturnValue(mockMessageId);
+
+    // Simulate sending a message with streaming
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
+
+    // Check that the initial empty message was sent with isStreaming flag
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'addMessage',
+      message: {
+        role: 'assistant',
+        content: '',
+        toolCalls: [],
+        isStreaming: true,
+      },
+      messageId: mockMessageId,
+    });
+
+    // Check that the streaming updates were sent
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'updateMessage',
+      content: 'Hello',
+      messageId: mockMessageId,
+    });
+
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'updateMessage',
+      content: ' world',
+      messageId: mockMessageId,
+    });
+
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'updateMessage',
+      content: '!',
+      messageId: mockMessageId,
+    });
+
+    // Check that the streaming completion was sent
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'completeMessage',
+      messageId: mockMessageId,
+    });
+  });
+
+  // TEST-UI-109: Handle tool calls during streaming
+  test('should handle tool calls during streaming', async () => {
+    const panel = await provider.createOrShowPanel();
+
+    // Mock the streamMessage method on the bridge
+    const bridge = mcpBridgeManager.getBridge('bridge1');
+    bridge.streamMessage = jest.fn().mockImplementation(async (message, handlers) => {
+      // Simulate streaming with tool calls
+      handlers.onContent('I will call a tool for you');
+
+      // Simulate a tool call
+      handlers.onToolCall?.({
+        name: 'test-tool.testFunction',
+        parameters: { param1: 'test value' },
+      });
+
+      // Simulate tool execution
+      bridge.callTool.mockResolvedValueOnce({ result: 'Tool result' });
+
+      // Complete the streaming
+      handlers.onComplete();
+    });
+
+    // Mock the supportsStreaming method to return true
+    jest.spyOn(provider as any, 'supportsStreaming').mockReturnValue(true);
+
+    // Generate a unique message ID for testing
+    const mockMessageId = 'test-message-id';
+    jest.spyOn(provider as any, 'generateMessageId').mockReturnValue(mockMessageId);
+
+    // Simulate sending a message with streaming that triggers a tool call
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Call a tool',
+      bridgeId: 'bridge1',
+    });
+
+    // Check that the tool call was executed
+    expect(bridge.callTool).toHaveBeenCalledWith('test-tool', 'testFunction', {
+      param1: 'test value',
+    });
+
+    // Check that the tool call result was sent to the webview
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'addToolCall',
+      toolCall: {
+        name: 'test-tool.testFunction',
+        parameters: { param1: 'test value' },
+        result: 'Tool result',
+      },
+      messageId: mockMessageId,
     });
   });
 });

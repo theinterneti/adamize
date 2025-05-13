@@ -375,6 +375,39 @@ export class MCPBridge {
   }
 
   /**
+   * Call a tool function
+   * @param toolName Tool name
+   * @param functionName Function name
+   * @param parameters Function parameters
+   * @returns Function result
+   */
+  async callTool(
+    toolName: string,
+    functionName: string,
+    parameters: Record<string, unknown>
+  ): Promise<any> {
+    if (!this.isRunning) {
+      throw new Error('MCP bridge is not running');
+    }
+
+    try {
+      this.log(`Calling tool: ${toolName}.${functionName}`);
+      const result = await this.toolRegistry.executeFunction(toolName, functionName, parameters);
+      this.emitEvent(MCPBridgeEventType.ToolCallExecuted, {
+        tool: toolName,
+        function: functionName,
+        parameters,
+        result,
+      });
+      return result;
+    } catch (error) {
+      this.log(`Error calling tool: ${error instanceof Error ? error.message : String(error)}`);
+      this.emitEvent(MCPBridgeEventType.Error, { error });
+      throw error;
+    }
+  }
+
+  /**
    * Log a message to the output channel
    * @param message Message to log
    */

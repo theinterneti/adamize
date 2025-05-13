@@ -14,27 +14,13 @@
  */
 
 import * as vscode from 'vscode';
-import { ModelManager } from '../utils/modelManager';
+import { ModelOperationStatus } from '../types/modelTypes';
+import { ModelManager } from '../utils/modelManager.new';
 
 /**
  * Model Manager View Provider
  */
-/**
- * Status of model operations
- *
- * @enum {string}
- * @implements REQ-MODEL-002 Add status indicator to show operation status
- */
-export enum ModelOperationStatus {
-  /** Operation is idle */
-  IDLE = 'idle',
-  /** Operation is in progress */
-  IN_PROGRESS = 'in-progress',
-  /** Operation succeeded */
-  SUCCESS = 'success',
-  /** Operation failed */
-  ERROR = 'error',
-}
+// Using ModelOperationStatus from types/modelTypes.ts
 
 /**
  * Model Manager View Provider

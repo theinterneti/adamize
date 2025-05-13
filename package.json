@@ -32,6 +32,11 @@
           "id": "adamize.modelManagerView",
           "name": "Model Manager",
           "icon": "$(package)"
+        },
+        {
+          "id": "adamize.presetManagerView",
+          "name": "Model Presets",
+          "icon": "$(settings-gear)"
         }
       ]
     },
@@ -513,6 +518,8 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:integration": "UNIT_TESTS_ONLY=false node ./out/test/runTest.js",
+    "test:e2e": "node ./out/test/e2e/runE2E.js",
+    "test:e2e:headless": "HEADLESS=true node ./out/test/e2e/runE2E.js",
     "test:coverage": "nyc --reporter=lcov --reporter=text node ./out/test/runTest.js",
     "test:jest:coverage": "jest --coverage --no-watchman",
     "test:watch": "nodemon --watch src --ext ts --exec 'npm test'",
