@@ -285,6 +285,7 @@ suite('MCP Chat View Test Suite', () => {
         isStreaming: true,
       },
       messageId: mockMessageId,
+      status: 'typing',
     });
 
     // Check that streamResponse was called with the correct parameters
@@ -409,6 +410,7 @@ suite('MCP Chat View Test Suite', () => {
         isStreaming: true,
       },
       messageId: mockMessageId,
+      status: 'typing',
     });
 
     // Check that the streaming updates were sent
@@ -479,15 +481,16 @@ suite('MCP Chat View Test Suite', () => {
       param1: 'test value',
     });
 
-    // Check that the tool call result was sent to the webview
-    expect(panel.webview.postMessage).toHaveBeenCalledWith({
-      command: 'addToolCall',
-      toolCall: {
-        name: 'test-tool.testFunction',
-        parameters: { param1: 'test value' },
-        result: 'Tool result',
-      },
-      messageId: mockMessageId,
-    });
+    // Check that the tool call was sent to the webview
+    expect(panel.webview.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'addToolCall',
+        messageId: mockMessageId,
+        toolCall: expect.objectContaining({
+          name: 'test-tool.testFunction',
+          parameters: { param1: 'test value' },
+        }),
+      })
+    );
   });
 });

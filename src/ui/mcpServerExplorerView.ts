@@ -291,12 +291,36 @@ export class MCPServerExplorerProvider implements vscode.TreeDataProvider<MCPSer
     // Set the webview's HTML content
     panel.webview.html = this.getToolDetailsHtml(tool, bridgeId, panel.webview);
 
+    // Show loading indicator
+    panel.webview.postMessage({
+      command: 'setStatus',
+      status: 'ready',
+      message: 'Ready to execute tool',
+    });
+
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
       async (message: any) => {
         switch (message.command) {
           case 'executeTool':
+            // Show loading indicator
+            panel.webview.postMessage({
+              command: 'setExecutionStatus',
+              status: 'executing',
+              message: 'Executing tool...',
+            });
+
             await this.executeTool(bridgeId, toolName, message.parameters, panel.webview);
+            break;
+
+          case 'refreshTool':
+            // Refresh tool details
+            const updatedTools = bridge.getAllTools();
+            const updatedTool = updatedTools.find(t => t.name === toolName);
+
+            if (updatedTool) {
+              panel.webview.html = this.getToolDetailsHtml(updatedTool, bridgeId, panel.webview);
+            }
             break;
         }
       },
@@ -315,20 +339,28 @@ export class MCPServerExplorerProvider implements vscode.TreeDataProvider<MCPSer
     webview: vscode.Webview
   ): Promise<void> {
     try {
-      // Show loading state
-      webview.postMessage({
-        command: 'setExecutionStatus',
-        status: 'executing',
-        message: 'Executing tool...',
-      });
-
       const bridge = this.mcpBridgeManager.getBridge(bridgeId);
       if (!bridge) {
         throw new Error(`Bridge ${bridgeId} not found`);
       }
 
+      // Get the tool to find the function
+      const tools = bridge.getAllTools();
+      const tool = tools.find(t => t.name === toolName);
+
+      if (!tool) {
+        throw new Error(`Tool ${toolName} not found`);
+      }
+
+      // Find the function to execute based on parameters
+      const functionName = this.findFunctionName(tool, parameters);
+
+      if (!functionName) {
+        throw new Error(`No matching function found for parameters: ${JSON.stringify(parameters)}`);
+      }
+
       // Execute the tool
-      const result = await bridge.callTool(toolName, parameters);
+      const result = await bridge.callTool(toolName, functionName, parameters);
 
       // Show result
       webview.postMessage({
@@ -339,7 +371,7 @@ export class MCPServerExplorerProvider implements vscode.TreeDataProvider<MCPSer
       });
 
       this.outputChannel.appendLine(
-        `Tool ${toolName} executed successfully: ${JSON.stringify(result)}`
+        `Tool ${toolName}.${functionName} executed successfully: ${JSON.stringify(result)}`
       );
     } catch (error) {
       // Show error
@@ -351,6 +383,43 @@ export class MCPServerExplorerProvider implements vscode.TreeDataProvider<MCPSer
 
       this.outputChannel.appendLine(`Error executing tool ${toolName}: ${error}`);
     }
+  }
+
+  /**
+   * Find the function name based on parameters
+   * @param tool Tool to search
+   * @param parameters Parameters to match
+   * @returns Function name or undefined if not found
+   */
+  private findFunctionName(tool: MCPTool, parameters: Record<string, any>): string | undefined {
+    // If the tool has only one function, use that
+    if (tool.functions && tool.functions.length === 1) {
+      return tool.functions[0].name;
+    }
+
+    // If the tool has multiple functions, try to match by parameters
+    if (tool.functions && tool.functions.length > 0) {
+      // First check if there's a direct match by parameter names
+      for (const func of tool.functions) {
+        if (func.parameters && func.parameters.properties) {
+          const paramNames = Object.keys(func.parameters.properties);
+          const inputParamNames = Object.keys(parameters);
+
+          // Check if all required parameters are present
+          const requiredParams = func.parameters.required || [];
+          const hasAllRequired = requiredParams.every(param => inputParamNames.includes(param));
+
+          if (hasAllRequired) {
+            return func.name;
+          }
+        }
+      }
+
+      // If no match found, return the first function as fallback
+      return tool.functions[0].name;
+    }
+
+    return undefined;
   }
 
   /**

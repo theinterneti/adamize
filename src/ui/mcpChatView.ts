@@ -174,12 +174,12 @@ export class MCPChatViewProvider {
     });
 
     try {
-      // Check if streaming is supported
+      // Always use streaming if available
       const useStreaming = this.supportsStreaming(bridge);
       const messageId = this.generateMessageId();
 
       if (useStreaming) {
-        // Create an initial empty assistant message
+        // Create an initial empty assistant message with typing indicator
         const initialAssistantMessage: ChatMessage = {
           role: 'assistant',
           content: '',
@@ -192,13 +192,27 @@ export class MCPChatViewProvider {
           command: 'addMessage',
           message: initialAssistantMessage,
           messageId: messageId,
+          status: 'typing',
         });
 
         // Start streaming
         await this.streamResponse(bridge, text, messageId, bridgeId);
       } else {
+        // Show loading indicator
+        this.panel.webview.postMessage({
+          command: 'setStatus',
+          status: 'loading',
+          message: 'Generating response...',
+        });
+
         // Use non-streaming approach
         const response = await bridge.sendMessage(text);
+
+        // Hide loading indicator
+        this.panel.webview.postMessage({
+          command: 'setStatus',
+          status: 'idle',
+        });
 
         // Parse tool calls from the response
         const toolCalls = this.parseToolCalls(response);
@@ -220,6 +234,13 @@ export class MCPChatViewProvider {
     } catch (error) {
       this.outputChannel.appendLine(`Error sending message: ${error}`);
       vscode.window.showErrorMessage(`Error sending message: ${error}`);
+
+      // Update UI to show error
+      this.panel.webview.postMessage({
+        command: 'setStatus',
+        status: 'error',
+        message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+      });
     }
   }
 
@@ -285,6 +306,9 @@ export class MCPChatViewProvider {
             messageId: messageId,
             toolCall: toolCall,
           });
+
+          // Execute the tool call if possible
+          this.executeToolCall(bridge, toolCall);
         },
         onComplete: () => {
           // Parse any additional tool calls from the full response
@@ -517,5 +541,44 @@ export class MCPChatViewProvider {
    */
   public getActiveBridgeId(): string | undefined {
     return this.activeBridgeId;
+  }
+
+  /**
+   * Execute a tool call
+   * @param bridge MCP bridge
+   * @param toolCall Tool call to execute
+   */
+  private async executeToolCall(bridge: any, toolCall: MCPToolCall): Promise<void> {
+    try {
+      // Parse the tool name and function name
+      const [toolName, functionName] = toolCall.name.split('.');
+
+      if (!toolName || !functionName) {
+        this.outputChannel.appendLine(`Invalid tool call format: ${toolCall.name}`);
+        return;
+      }
+
+      // Execute the tool call
+      const result = await bridge.callTool(toolName, functionName, toolCall.parameters);
+
+      this.outputChannel.appendLine(`Tool call result: ${JSON.stringify(result)}`);
+
+      // Send tool result to webview
+      this.panel?.webview.postMessage({
+        command: 'addToolResult',
+        toolName: toolName,
+        functionName: functionName,
+        result: result,
+      });
+    } catch (error) {
+      this.outputChannel.appendLine(`Error executing tool call: ${error}`);
+
+      // Send error to webview
+      this.panel?.webview.postMessage({
+        command: 'addToolError',
+        toolCall: toolCall,
+        error: String(error),
+      });
+    }
   }
 }
