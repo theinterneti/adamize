@@ -26,6 +26,22 @@
           "name": "MCP Servers",
           "icon": "$(server)"
         }
+      ],
+      "adamize": [
+        {
+          "id": "adamize.modelManagerView",
+          "name": "Model Manager",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "adamize",
+          "title": "Adamize",
+          "icon": "$(beaker)"
+        }
       ]
     },
     "configuration": {
@@ -74,7 +90,9 @@
         },
         "adamize.ollama.provider": {
           "type": "string",
-          "enum": ["ollama"],
+          "enum": [
+            "ollama"
+          ],
           "default": "ollama",
           "description": "LLM provider to use"
         },
@@ -110,6 +128,11 @@
           "type": "string",
           "default": "You are a helpful assistant that can use tools to help answer questions.",
           "description": "System prompt for Ollama"
+        },
+        "adamize.notion.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Notion integration (coming soon)"
         },
         "adamize.services": {
           "type": "object",
@@ -308,6 +331,42 @@
         "title": "Open Memory Graph",
         "category": "Adamize",
         "icon": "$(graph)"
+      },
+      {
+        "command": "adamize.refreshModels",
+        "title": "Refresh Models",
+        "category": "Adamize Models",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "adamize.pullOllamaModel",
+        "title": "Pull Ollama Model",
+        "category": "Adamize Models",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "adamize.removeOllamaModel",
+        "title": "Remove Ollama Model",
+        "category": "Adamize Models",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "adamize.startOllama",
+        "title": "Start Ollama Server",
+        "category": "Adamize Models",
+        "icon": "$(play)"
+      },
+      {
+        "command": "adamize.stopOllama",
+        "title": "Stop Ollama Server",
+        "category": "Adamize Models",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "adamize.openOllamaChat",
+        "title": "Open Ollama Chat",
+        "category": "Adamize Models",
+        "icon": "$(comment)"
       }
     ],
     "menus": {
@@ -320,6 +379,16 @@
         {
           "command": "adamize.addMCPServer",
           "when": "view == mcpServerExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "adamize.refreshModels",
+          "when": "view == adamize.modelManagerView",
+          "group": "navigation"
+        },
+        {
+          "command": "adamize.pullOllamaModel",
+          "when": "view == adamize.modelManagerView",
           "group": "navigation"
         }
       ],
@@ -355,6 +424,32 @@
           "group": "adamize@4"
         }
       ],
+      "commandPalette": [
+        {
+          "command": "adamize.refreshModels",
+          "when": "adamize.ollama.enabled"
+        },
+        {
+          "command": "adamize.pullOllamaModel",
+          "when": "adamize.ollama.enabled"
+        },
+        {
+          "command": "adamize.removeOllamaModel",
+          "when": "adamize.ollama.enabled"
+        },
+        {
+          "command": "adamize.startOllama",
+          "when": "adamize.ollama.enabled"
+        },
+        {
+          "command": "adamize.stopOllama",
+          "when": "adamize.ollama.enabled"
+        },
+        {
+          "command": "adamize.openOllamaChat",
+          "when": "adamize.ollama.enabled"
+        }
+      ],
       "view/item/context": [
         {
           "command": "adamize.startMCPServer",
@@ -379,6 +474,26 @@
         {
           "command": "adamize.openMemoryGraph",
           "when": "view == mcpServerExplorer && viewItem == mcpServer-running",
+          "group": "navigation"
+        },
+        {
+          "command": "adamize.removeOllamaModel",
+          "when": "view == adamize.modelManagerView && viewItem == ollamaModel",
+          "group": "inline"
+        },
+        {
+          "command": "adamize.startOllama",
+          "when": "view == adamize.modelManagerView && viewItem == ollamaServer-stopped",
+          "group": "inline"
+        },
+        {
+          "command": "adamize.stopOllama",
+          "when": "view == adamize.modelManagerView && viewItem == ollamaServer-running",
+          "group": "inline"
+        },
+        {
+          "command": "adamize.openOllamaChat",
+          "when": "view == adamize.modelManagerView && viewItem == ollamaModel",
           "group": "navigation"
         }
       ]
@@ -451,6 +566,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@notionhq/client": "^3.0.1",
     "axios": "^1.9.0",
     "chokidar": "^4.0.3",
     "cytoscape": "^3.32.0",

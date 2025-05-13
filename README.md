@@ -16,13 +16,14 @@ Adamize is a VS Code extension that provides AI-assisted development capabilitie
 - **Test-Driven Development**: Assistance for writing tests and implementing code
 - **Memory Management**: Store and retrieve development context using Neo4j
 - **DevOps Best Practices**: Guidance for following DevOps best practices
+- **Model Management**: Discover, pull, and manage local LLM models
 - **Customizable**: Configure to match your development workflow
 
 ## Installation
 
 ### From VS Code Marketplace
 
-*Coming soon*
+_Coming soon_
 
 ### From VSIX File
 
@@ -61,13 +62,19 @@ Adamize can be configured through VS Code settings:
 
 ### Available Settings
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `adamize.environment` | Environment type (development, testing, production) | `"development"` |
-| `adamize.mcp.enabled` | Enable MCP client | `true` |
-| `adamize.mcp.serverUrl` | MCP server URL | `"http://localhost:8000"` |
-| `adamize.mcp.neo4jServerUrl` | Neo4j MCP server URL | `"http://localhost:8001"` |
-| `adamize.mcp.connectionMethod` | MCP connection method (http, docker-exec, local-process, auto) | `"auto"` |
+| Setting                        | Description                                                    | Default                          |
+| ------------------------------ | -------------------------------------------------------------- | -------------------------------- |
+| `adamize.environment`          | Environment type (development, testing, production)            | `"development"`                  |
+| `adamize.mcp.enabled`          | Enable MCP client                                              | `true`                           |
+| `adamize.mcp.serverUrl`        | MCP server URL                                                 | `"http://localhost:8000"`        |
+| `adamize.mcp.neo4jServerUrl`   | Neo4j MCP server URL                                           | `"http://localhost:8001"`        |
+| `adamize.mcp.connectionMethod` | MCP connection method (http, docker-exec, local-process, auto) | `"auto"`                         |
+| `adamize.ollama.enabled`       | Enable Ollama integration                                      | `true`                           |
+| `adamize.ollama.endpoint`      | Ollama API endpoint                                            | `"http://localhost:11434"`       |
+| `adamize.ollama.model`         | Default Ollama model                                           | `"qwen3-coder"`                  |
+| `adamize.ollama.temperature`   | Temperature for model generation                               | `0.7`                            |
+| `adamize.ollama.maxTokens`     | Maximum tokens to generate                                     | `2000`                           |
+| `adamize.ollama.systemPrompt`  | System prompt for Ollama                                       | `"You are a helpful assistant."` |
 
 ## Development Environment
 
@@ -106,6 +113,16 @@ This project uses a dedicated DevContainer for development to ensure consistency
 2. Run "Adamize: Search Memory"
 3. Enter your search query
 4. The extension will display the search results
+
+### Managing Models
+
+1. Open the Command Palette (Ctrl+Shift+P)
+2. Run "Adamize Models: Refresh Models" to see available models
+3. Run "Adamize Models: Pull Ollama Model" to download a new model
+4. Run "Adamize Models: Remove Ollama Model" to remove an existing model
+5. Run "Adamize Models: Start Ollama Server" to start the Ollama server
+6. Run "Adamize Models: Stop Ollama Server" to stop the Ollama server
+7. Run "Adamize Models: Open Ollama Chat" to chat with a model
 
 ## Development Workflow
 
@@ -238,6 +255,11 @@ npm run package
     - `mcpUtils.ts` - Utility functions
   - `memory/` - Memory client implementation
   - `utils/` - Utility functions
+    - `modelManager.ts` - Model management utilities
+    - `presetManager.ts` - Model preset management
+  - `ui/` - User interface components
+    - `modelManagerView.ts` - Model manager view
+    - `modelFilterView.ts` - Model filter view
   - `test/` - Test code
     - `suite/` - Test suites
     - `templates/` - Test templates

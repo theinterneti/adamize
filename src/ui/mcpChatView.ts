@@ -12,8 +12,8 @@
  * @implements IMPL-UI-107 Allow selecting different MCP servers for the conversation
  */
 
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { MCPBridgeManager } from '../mcp/mcpBridgeManager';
 import { MCPToolCall } from '../mcp/mcpTypes';
 
@@ -24,6 +24,7 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   toolCalls?: MCPToolCall[];
+  isStreaming?: boolean;
 }
 
 /**
@@ -34,6 +35,9 @@ interface WebviewMessage {
   text?: string;
   bridgeId?: string;
   message?: ChatMessage;
+  messageId?: string;
+  content?: string;
+  done?: boolean;
 }
 
 /**
@@ -77,16 +81,11 @@ export class MCPChatViewProvider {
     }
 
     // Otherwise, create a new panel
-    this.panel = vscode.window.createWebviewPanel(
-      'mcpChat',
-      'MCP Chat',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [this.extensionUri]
-      }
-    );
+    this.panel = vscode.window.createWebviewPanel('mcpChat', 'MCP Chat', vscode.ViewColumn.One, {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      localResourceRoots: [this.extensionUri],
+    });
 
     // Set the webview's HTML content
     this.panel.webview.html = this.getWebviewContent(this.panel.webview);
@@ -171,30 +170,234 @@ export class MCPChatViewProvider {
     // Send user message to webview
     this.panel.webview.postMessage({
       command: 'addMessage',
-      message: userMessage
+      message: userMessage,
     });
 
     try {
-      // Send message to LLM
-      const response = await bridge.sendMessage(text);
+      // Check if streaming is supported
+      const useStreaming = this.supportsStreaming(bridge);
+      const messageId = this.generateMessageId();
 
-      // Add assistant message to conversation history
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: response,
-        toolCalls: [] // We'll need to parse tool calls from the response in a future update
-      };
-      this.addMessageToHistory(bridgeId, assistantMessage);
+      if (useStreaming) {
+        // Create an initial empty assistant message
+        const initialAssistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: '',
+          toolCalls: [],
+          isStreaming: true,
+        };
 
-      // Send assistant message to webview
-      this.panel.webview.postMessage({
-        command: 'addMessage',
-        message: assistantMessage
-      });
+        // Send initial message to webview
+        this.panel.webview.postMessage({
+          command: 'addMessage',
+          message: initialAssistantMessage,
+          messageId: messageId,
+        });
+
+        // Start streaming
+        await this.streamResponse(bridge, text, messageId, bridgeId);
+      } else {
+        // Use non-streaming approach
+        const response = await bridge.sendMessage(text);
+
+        // Parse tool calls from the response
+        const toolCalls = this.parseToolCalls(response);
+
+        // Add assistant message to conversation history
+        const assistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: response,
+          toolCalls: toolCalls,
+        };
+        this.addMessageToHistory(bridgeId, assistantMessage);
+
+        // Send assistant message to webview
+        this.panel.webview.postMessage({
+          command: 'addMessage',
+          message: assistantMessage,
+        });
+      }
     } catch (error) {
       this.outputChannel.appendLine(`Error sending message: ${error}`);
       vscode.window.showErrorMessage(`Error sending message: ${error}`);
     }
+  }
+
+  /**
+   * Check if the bridge supports streaming
+   * @param bridge MCP bridge
+   * @returns Whether streaming is supported
+   */
+  private supportsStreaming(bridge: any): boolean {
+    // Check if the bridge has a streamMessage method
+    return typeof bridge.streamMessage === 'function';
+  }
+
+  /**
+   * Generate a unique message ID
+   * @returns Message ID
+   */
+  private generateMessageId(): string {
+    return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  /**
+   * Stream a response from the LLM
+   * @param bridge MCP bridge
+   * @param text User message
+   * @param messageId Message ID
+   * @param bridgeId Bridge ID
+   */
+  private async streamResponse(
+    bridge: any,
+    text: string,
+    messageId: string,
+    bridgeId: string
+  ): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    let fullContent = '';
+    let toolCalls: MCPToolCall[] = [];
+
+    try {
+      // Start streaming
+      await bridge.streamMessage(text, {
+        onContent: (content: string) => {
+          // Append content
+          fullContent += content;
+
+          // Send content update to webview
+          this.panel?.webview.postMessage({
+            command: 'updateStreamingMessage',
+            messageId: messageId,
+            content: content,
+          });
+        },
+        onToolCall: (toolCall: MCPToolCall) => {
+          // Add tool call
+          toolCalls.push(toolCall);
+
+          // Send tool call to webview
+          this.panel?.webview.postMessage({
+            command: 'addToolCall',
+            messageId: messageId,
+            toolCall: toolCall,
+          });
+        },
+        onComplete: () => {
+          // Parse any additional tool calls from the full response
+          const parsedToolCalls = this.parseToolCalls(fullContent);
+
+          // Merge with tool calls received during streaming
+          toolCalls = [
+            ...toolCalls,
+            ...parsedToolCalls.filter(
+              tc =>
+                !toolCalls.some(
+                  existing =>
+                    existing.name === tc.name &&
+                    JSON.stringify(existing.parameters) === JSON.stringify(tc.parameters)
+                )
+            ),
+          ];
+
+          // Create the final message
+          const assistantMessage: ChatMessage = {
+            role: 'assistant',
+            content: fullContent,
+            toolCalls: toolCalls,
+            isStreaming: false,
+          };
+
+          // Add to conversation history
+          this.addMessageToHistory(bridgeId, assistantMessage);
+
+          // Send completion to webview
+          this.panel?.webview.postMessage({
+            command: 'completeStreamingMessage',
+            messageId: messageId,
+            message: assistantMessage,
+            done: true,
+          });
+        },
+      });
+    } catch (error) {
+      this.outputChannel.appendLine(`Error streaming message: ${error}`);
+
+      // Complete the message with error
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: fullContent || 'Error: Failed to stream response',
+        toolCalls: toolCalls,
+        isStreaming: false,
+      };
+
+      // Add to conversation history
+      this.addMessageToHistory(bridgeId, errorMessage);
+
+      // Send completion to webview
+      this.panel?.webview.postMessage({
+        command: 'completeStreamingMessage',
+        messageId: messageId,
+        message: errorMessage,
+        done: true,
+      });
+    }
+  }
+
+  /**
+   * Parse tool calls from LLM response
+   * @param response LLM response text
+   * @returns Array of tool calls
+   */
+  private parseToolCalls(response: string): MCPToolCall[] {
+    const toolCalls: MCPToolCall[] = [];
+
+    // Look for tool call patterns in the response
+    // Format: <tool_call>{"name": "tool_name", "parameters": {...}}</tool_call>
+    const toolCallRegex = /<tool_call>(.*?)<\/tool_call>/gs;
+    let match;
+
+    while ((match = toolCallRegex.exec(response)) !== null) {
+      try {
+        const toolCallJson = match[1];
+        const toolCall = JSON.parse(toolCallJson);
+
+        if (toolCall.name && toolCall.parameters) {
+          toolCalls.push({
+            name: toolCall.name,
+            parameters: toolCall.parameters,
+            result: toolCall.result || 'No result available',
+          });
+        }
+      } catch (error) {
+        this.outputChannel.appendLine(`Error parsing tool call: ${error}`);
+      }
+    }
+
+    // Alternative format: ```json\n{"name": "tool_name", "parameters": {...}}\n```
+    const codeBlockRegex = /```json\s*\n(.*?)\n```/gs;
+
+    while ((match = codeBlockRegex.exec(response)) !== null) {
+      try {
+        const toolCallJson = match[1];
+        const toolCall = JSON.parse(toolCallJson);
+
+        if (toolCall.name && toolCall.parameters) {
+          toolCalls.push({
+            name: toolCall.name,
+            parameters: toolCall.parameters,
+            result: toolCall.result || 'No result available',
+          });
+        }
+      } catch (error) {
+        this.outputChannel.appendLine(`Error parsing tool call from code block: ${error}`);
+      }
+    }
+
+    return toolCalls;
   }
 
   /**
@@ -216,7 +419,7 @@ export class MCPChatViewProvider {
 
     if (this.panel) {
       this.panel.webview.postMessage({
-        command: 'clearMessages'
+        command: 'clearMessages',
       });
     }
   }
@@ -233,13 +436,13 @@ export class MCPChatViewProvider {
     const servers = bridges.map(bridge => ({
       id: bridge.id,
       name: `${bridge.options.llmModel} (${bridge.status})`,
-      status: bridge.status
+      status: bridge.status,
     }));
 
     this.panel.webview.postMessage({
       command: 'updateServerList',
       servers,
-      activeBridgeId: this.activeBridgeId
+      activeBridgeId: this.activeBridgeId,
     });
   }
 

@@ -1,7 +1,28 @@
 import * as assert from 'assert';
-import * as vscode from 'vscode';
 import * as sinon from 'sinon';
+import * as vscode from 'vscode';
 import { createOutputChannelStub } from '../helpers/testHelpers';
+
+// Mock the Notion modules
+jest.mock('../../notion/notionCommands', () => ({
+  registerNotionCommands: jest.fn(),
+}));
+
+jest.mock('../../notion/notionToolRegistration', () => ({
+  registerNotionTool: jest.fn(),
+}));
+
+// Mock the ModelManager
+jest.mock('../../utils/modelManager', () => ({
+  ModelManager: jest.fn().mockImplementation(() => ({
+    discoverLocalModels: jest.fn().mockResolvedValue([]),
+    discoverOllamaModels: jest.fn().mockResolvedValue([]),
+    pullOllamaModel: jest.fn().mockResolvedValue(undefined),
+    removeOllamaModel: jest.fn().mockResolvedValue(undefined),
+    getModel: jest.fn().mockResolvedValue(null),
+    listModels: jest.fn().mockResolvedValue([]),
+  })),
+}));
 
 suite('Extension Test Suite', () => {
   vscode.window.showInformationMessage('Starting extension tests');
@@ -18,20 +39,20 @@ suite('Extension Test Suite', () => {
 
     // Create stubs for VS Code commands
     const registerCommandStub = sinon.stub(vscode.commands, 'registerCommand').returns({
-      dispose: sinon.stub()
+      dispose: sinon.stub(),
     });
 
     // Add registerTextEditorCommand to vscode.commands if it doesn't exist
     if (!vscode.commands.registerTextEditorCommand) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vscode.commands as any).registerTextEditorCommand = () => ({
-        dispose: sinon.stub()
+        dispose: sinon.stub(),
       });
     }
 
     // Stub registerTextEditorCommand
     sinon.stub(vscode.commands, 'registerTextEditorCommand').returns({
-      dispose: sinon.stub()
+      dispose: sinon.stub(),
     });
 
     // Create stubs for VS Code window functions
@@ -41,7 +62,7 @@ suite('Extension Test Suite', () => {
     if (!vscode.window.createTextEditorDecorationType) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vscode.window as any).createTextEditorDecorationType = () => ({
-        dispose: sinon.stub()
+        dispose: sinon.stub(),
       });
     }
 
@@ -52,7 +73,7 @@ suite('Extension Test Suite', () => {
         Left: 1,
         Center: 2,
         Right: 3,
-        Full: 4
+        Full: 4,
       };
     }
 
@@ -60,7 +81,7 @@ suite('Extension Test Suite', () => {
     if (!vscode.window.onDidChangeActiveTextEditor) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vscode.window as any).onDidChangeActiveTextEditor = () => ({
-        dispose: sinon.stub()
+        dispose: sinon.stub(),
       });
     }
 
@@ -68,7 +89,7 @@ suite('Extension Test Suite', () => {
     if (!vscode.workspace.onDidChangeTextDocument) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (vscode.workspace as any).onDidChangeTextDocument = () => ({
-        dispose: sinon.stub()
+        dispose: sinon.stub(),
       });
     }
 
@@ -80,7 +101,7 @@ suite('Extension Test Suite', () => {
 
     // Now we can stub it
     sinon.stub(vscode.window, 'createTreeView').returns({
-      dispose: sinon.stub()
+      dispose: sinon.stub(),
     });
 
     // We already imported createOutputChannelStub at the top of the file
@@ -90,8 +111,8 @@ suite('Extension Test Suite', () => {
       subscriptions: [],
       globalState: {
         get: sinon.stub().returns(true),
-        update: sinon.stub().resolves()
-      }
+        update: sinon.stub().resolves(),
+      },
     };
 
     // Call the activate function
@@ -117,7 +138,7 @@ suite('Extension Test Suite', () => {
     const showInfoStub = sinon.stub(vscode.window, 'showInformationMessage');
     const globalStateStub = {
       get: sinon.stub().returns(undefined),
-      update: sinon.stub().resolves()
+      update: sinon.stub().resolves(),
     };
     const context = { globalState: globalStateStub };
 
@@ -125,7 +146,10 @@ suite('Extension Test Suite', () => {
     extension.showWelcomeMessage(context);
 
     // Assert
-    assert.strictEqual(showInfoStub.calledWith('Welcome to Adamize! Get started by connecting to an MCP server.'), true);
+    assert.strictEqual(
+      showInfoStub.calledWith('Welcome to Adamize! Get started by connecting to an MCP server.'),
+      true
+    );
     assert.strictEqual(globalStateStub.update.calledWith('adamize.hasShownWelcome', true), true);
 
     // Restore stubs
@@ -141,7 +165,7 @@ suite('Extension Test Suite', () => {
     const showInfoStub = sinon.stub(vscode.window, 'showInformationMessage');
     const globalStateStub = {
       get: sinon.stub().returns(true),
-      update: sinon.stub().resolves()
+      update: sinon.stub().resolves(),
     };
     const context = { globalState: globalStateStub };
 

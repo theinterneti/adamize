@@ -1,0 +1,301 @@
+/**
+ * Model Manager CSS
+ * 
+ * This file provides the styles for the Model Manager view.
+ * 
+ * @implements REQ-MODEL-004 Add filtering and sorting capabilities to the model manager view
+ */
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  padding: 0;
+  margin: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.actions {
+  display: flex;
+  gap: 5px;
+}
+
+.actions button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.actions button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Filter Panel */
+.filter-panel {
+  background-color: var(--vscode-sideBar-background);
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filter-header h3 {
+  margin: 0;
+  font-size: 1em;
+}
+
+.clear-button {
+  background-color: transparent;
+  color: var(--vscode-button-foreground);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9em;
+  padding: 2px 5px;
+}
+
+.clear-button:hover {
+  text-decoration: underline;
+}
+
+.filter-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.filter-group input[type="text"]:focus,
+.filter-group select:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.checkbox-group {
+  flex-direction: row;
+  align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.filter-count {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 5px;
+  text-align: right;
+}
+
+/* Loading and Empty States */
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.loading .codicon-loading {
+  animation: spin 1s infinite linear;
+  margin-right: 5px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty button {
+  margin-top: 10px;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.empty button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+/* Model List */
+.model-list {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.provider-section {
+  margin-bottom: 15px;
+}
+
+.provider-section h3 {
+  margin: 0 0 5px 0;
+  font-size: 1em;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding-bottom: 5px;
+}
+
+.model-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.model-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.model-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.model-name {
+  font-weight: bold;
+}
+
+.model-details {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.model-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.model-actions button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-size: 0.9em;
+}
+
+.model-actions button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Model Details */
+#model-details {
+  background-color: var(--vscode-sideBar-background);
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+  display: none;
+}
+
+#model-details h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1em;
+}
+
+.details-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.details-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.details-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.details-label {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.details-value {
+  font-size: 1em;
+}
+
+/* Status */
+.status {
+  padding: 8px;
+  margin-top: 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  display: none;
+}
+
+.status-in-progress {
+  background-color: var(--vscode-statusBarItem-warningBackground);
+  color: var(--vscode-statusBarItem-warningForeground);
+}
+
+.status-error {
+  background-color: var(--vscode-statusBarItem-errorBackground);
+  color: var(--vscode-statusBarItem-errorForeground);
+}
+
+.status-success {
+  background-color: var(--vscode-statusBarItem-prominentBackground);
+  color: var(--vscode-statusBarItem-prominentForeground);
+}

@@ -6,11 +6,12 @@
  * @implements REQ-MCP-081 Configure MCP bridge settings
  * @implements REQ-MCP-082 Integrate with VS Code extension
  * @implements REQ-MCP-083 Handle multiple MCP bridges
+ * @implements REQ-OLLAMA-012 Support streaming responses from Ollama
  */
 
-import * as vscode from 'vscode';
 import { v4 as uuidv4 } from 'uuid';
-import { MCPBridge, MCPBridgeOptions, MCPBridgeEventType } from './mcpBridge';
+import * as vscode from 'vscode';
+import { MCPBridge, MCPBridgeEventType, MCPBridgeOptions } from './mcpBridge';
 import { MCPTool } from './mcpTypes';
 
 /**
@@ -60,7 +61,7 @@ export class MCPBridgeManager {
       id,
       bridge,
       options,
-      status: 'stopped'
+      status: 'stopped',
     });
 
     this.log(`Created bridge ${id}`);
@@ -172,7 +173,7 @@ export class MCPBridgeManager {
         id,
         bridge: newBridge,
         options: newOptions,
-        status: 'stopped'
+        status: 'stopped',
       });
 
       if (wasRunning) {
@@ -252,12 +253,48 @@ export class MCPBridgeManager {
   }
 
   /**
+   * Stream a message to a bridge
+   * @param bridgeId Bridge ID
+   * @param message Message to send
+   * @param handlers Event handlers for streaming
+   */
+  async streamMessage(
+    bridgeId: string,
+    message: string,
+    handlers: {
+      onContent: (content: string) => void;
+      onToolCall?: (toolCall: any) => void;
+      onComplete: () => void;
+      onError?: (error: Error) => void;
+    }
+  ): Promise<void> {
+    const bridge = this.getBridge(bridgeId);
+    if (!bridge) {
+      throw new Error(`Bridge ${bridgeId} not found`);
+    }
+
+    try {
+      this.log(`Streaming message to bridge ${bridgeId}`);
+      await bridge.streamMessage(message, handlers);
+    } catch (error) {
+      this.log(
+        `Error streaming message to bridge ${bridgeId}: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Add an event listener to a bridge
    * @param bridgeId Bridge ID
    * @param eventType Event type
    * @param listener Event listener
    */
-  addEventListener(bridgeId: string, eventType: MCPBridgeEventType, listener: (event: any) => void): void {
+  addEventListener(
+    bridgeId: string,
+    eventType: MCPBridgeEventType,
+    listener: (event: any) => void
+  ): void {
     const bridge = this.getBridge(bridgeId);
     if (bridge) {
       bridge.addEventListener(eventType, listener);
@@ -270,11 +307,28 @@ export class MCPBridgeManager {
    * @param eventType Event type
    * @param listener Event listener
    */
-  removeEventListener(bridgeId: string, eventType: MCPBridgeEventType, listener: (event: any) => void): void {
+  removeEventListener(
+    bridgeId: string,
+    eventType: MCPBridgeEventType,
+    listener: (event: any) => void
+  ): void {
     const bridge = this.getBridge(bridgeId);
     if (bridge) {
       bridge.removeEventListener(eventType, listener);
     }
+  }
+
+  /**
+   * Get the tool registry from the first bridge
+   * @returns Tool registry or undefined if no bridges exist
+   */
+  getToolRegistry(): any | undefined {
+    const bridges = this.getAllBridges();
+    if (bridges.length > 0) {
+      const bridge = bridges[0].bridge;
+      return bridge.getToolRegistry();
+    }
+    return undefined;
   }
 
   /**

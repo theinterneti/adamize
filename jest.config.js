@@ -5,6 +5,7 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/test/**',
+    '!src/notion/**', // Skip Notion coverage for now
     '!**/node_modules/**',
     '!**/out/**',
     '!**/.vscode-test/**',
@@ -26,21 +27,12 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/',
-    '/.vscode-test/'
-  ],
+  transformIgnorePatterns: ['/node_modules/', '/.vscode-test/'],
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
-  modulePathIgnorePatterns: [
-    '<rootDir>/runtipi/',
-    '<rootDir>/tipi/',
-    '<rootDir>/.vscode-test/'
-  ],
-  watchPathIgnorePatterns: [
-    '<rootDir>/.vscode-test/'
-  ],
+  modulePathIgnorePatterns: ['<rootDir>/runtipi/', '<rootDir>/tipi/', '<rootDir>/.vscode-test/'],
+  watchPathIgnorePatterns: ['<rootDir>/.vscode-test/'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   verbose: true,
   testTimeout: 30000,
@@ -50,8 +42,5 @@ module.exports = {
     throwOnModuleCollision: false,
   },
   // Use .jestignore file
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/.vscode-test/'
-  ],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.vscode-test/'],
 };

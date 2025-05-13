@@ -8,13 +8,14 @@
  * @implements REQ-MCP-061 Format prompts for LLM consumption
  * @implements REQ-MCP-062 Process LLM responses and extract tool calls
  * @implements REQ-MCP-063 Support multiple LLM providers
+ * @implements REQ-OLLAMA-012 Support streaming responses from Ollama
  */
 
-import { exec, ChildProcess } from 'child_process';
+import { ChildProcess, exec } from 'child_process';
 import { LLMProvider } from '../llmClient';
-import { VSCodeLogger } from './vscodeLogger';
 import { MCPToolRegistry } from '../mcpToolRegistry';
 import { LLMConfig, MessageRole } from './bridgeTypes';
+import { VSCodeLogger } from './vscodeLogger';
 
 /**
  * Chat message
@@ -62,6 +63,20 @@ export interface ToolCallResult {
 /**
  * LLM Client for MCP Bridge
  */
+/**
+ * Streaming event handlers
+ */
+export interface StreamingEventHandlers {
+  /** Called when content is received */
+  onContent: (content: string) => void;
+  /** Called when a tool call is detected */
+  onToolCall?: (toolCall: ToolCall) => void;
+  /** Called when streaming is complete */
+  onComplete: () => void;
+  /** Called when an error occurs */
+  onError?: (error: Error) => void;
+}
+
 export class LLMBridgeClient {
   private config: LLMConfig;
   private logger: VSCodeLogger;
@@ -76,11 +91,7 @@ export class LLMBridgeClient {
    * @param toolRegistry Tool registry
    * @param logger VS Code logger
    */
-  constructor(
-    config: LLMConfig,
-    toolRegistry: MCPToolRegistry,
-    logger: VSCodeLogger
-  ) {
+  constructor(config: LLMConfig, toolRegistry: MCPToolRegistry, logger: VSCodeLogger) {
     this.config = config;
     this.toolRegistry = toolRegistry;
     this.logger = logger;
@@ -89,7 +100,7 @@ export class LLMBridgeClient {
     if (this.config.systemPrompt) {
       this.conversationHistory.push({
         role: MessageRole.System,
-        content: this.config.systemPrompt
+        content: this.config.systemPrompt,
       });
     }
 
@@ -113,7 +124,7 @@ export class LLMBridgeClient {
       // Add user message to conversation history
       this.conversationHistory.push({
         role: MessageRole.User,
-        content: formattedPrompt
+        content: formattedPrompt,
       });
 
       // Ensure Ollama is running
@@ -126,7 +137,9 @@ export class LLMBridgeClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        this.logger.error(`Request timed out after ${LLMBridgeClient.REQUEST_TIMEOUT / 1000} seconds`);
+        this.logger.error(
+          `Request timed out after ${LLMBridgeClient.REQUEST_TIMEOUT / 1000} seconds`
+        );
       }, LLMBridgeClient.REQUEST_TIMEOUT);
 
       try {
@@ -134,10 +147,10 @@ export class LLMBridgeClient {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {})
+            ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
           },
           body: JSON.stringify(requestBody),
-          signal: controller.signal
+          signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
@@ -152,7 +165,7 @@ export class LLMBridgeClient {
         // Add assistant message to conversation history
         this.conversationHistory.push({
           role: MessageRole.Assistant,
-          content: responseContent
+          content: responseContent,
         });
 
         // Check for tool calls in the response
@@ -167,14 +180,18 @@ export class LLMBridgeClient {
               this.conversationHistory.push({
                 role: MessageRole.Tool,
                 name: toolCall.function.name,
-                content: JSON.stringify(result)
+                content: JSON.stringify(result),
               });
             } catch (error) {
-              this.logger.error(`Error executing tool call: ${error instanceof Error ? error.message : String(error)}`);
+              this.logger.error(
+                `Error executing tool call: ${error instanceof Error ? error.message : String(error)}`
+              );
               this.conversationHistory.push({
                 role: MessageRole.Tool,
                 name: toolCall.function.name,
-                content: JSON.stringify({ error: error instanceof Error ? error.message : String(error) })
+                content: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error),
+                }),
               });
             }
           }
@@ -188,25 +205,28 @@ export class LLMBridgeClient {
         clearTimeout(timeoutId);
       }
     } catch (error) {
-      this.logger.error(`Error sending prompt: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error sending prompt: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
 
   /**
    * Create request body
+   * @param streaming Whether to enable streaming
    * @returns Request body
    */
-  private createRequestBody(): any {
+  private createRequestBody(streaming: boolean = false): any {
     const baseBody = {
       model: this.config.model,
       messages: this.conversationHistory.map(msg => ({
         role: msg.role.toLowerCase(),
         content: msg.content,
-        ...(msg.name ? { name: msg.name } : {})
+        ...(msg.name ? { name: msg.name } : {}),
       })),
       temperature: this.config.temperature || 0.7,
-      max_tokens: this.config.maxTokens || 1000
+      max_tokens: this.config.maxTokens || 1000,
     };
 
     // Add provider-specific parameters
@@ -214,10 +234,13 @@ export class LLMBridgeClient {
       case LLMProvider.Ollama:
         return {
           ...baseBody,
-          stream: false
+          stream: streaming,
         };
       default:
-        return baseBody;
+        return {
+          ...baseBody,
+          stream: streaming,
+        };
     }
   }
 
@@ -233,11 +256,13 @@ export class LLMBridgeClient {
         return data.message?.content || '';
       default:
         // Try to extract content from various formats
-        return data.message?.content ||
-               data.generated_text ||
-               data.choices?.[0]?.message?.content ||
-               data.response ||
-               '';
+        return (
+          data.message?.content ||
+          data.generated_text ||
+          data.choices?.[0]?.message?.content ||
+          data.response ||
+          ''
+        );
     }
   }
 
@@ -255,14 +280,16 @@ export class LLMBridgeClient {
 
         // Check if it's a tool call
         if (jsonData.tool && jsonData.function && jsonData.parameters) {
-          return [{
-            id: `call-${Date.now()}`,
-            type: 'function',
-            function: {
-              name: jsonData.function,
-              arguments: JSON.stringify(jsonData.parameters)
-            }
-          }];
+          return [
+            {
+              id: `call-${Date.now()}`,
+              type: 'function',
+              function: {
+                name: jsonData.function,
+                arguments: JSON.stringify(jsonData.parameters),
+              },
+            },
+          ];
         }
       }
 
@@ -273,14 +300,16 @@ export class LLMBridgeClient {
           try {
             const jsonData = JSON.parse(jsonStr);
             if (jsonData.tool && jsonData.function && jsonData.parameters) {
-              return [{
-                id: `call-${Date.now()}`,
-                type: 'function',
-                function: {
-                  name: jsonData.function,
-                  arguments: JSON.stringify(jsonData.parameters)
-                }
-              }];
+              return [
+                {
+                  id: `call-${Date.now()}`,
+                  type: 'function',
+                  function: {
+                    name: jsonData.function,
+                    arguments: JSON.stringify(jsonData.parameters),
+                  },
+                },
+              ];
             }
           } catch (e) {
             // Ignore parsing errors for invalid JSON
@@ -290,7 +319,9 @@ export class LLMBridgeClient {
 
       return [];
     } catch (error) {
-      this.logger.error(`Error extracting tool calls: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error extracting tool calls: ${error instanceof Error ? error.message : String(error)}`
+      );
       return [];
     }
   }
@@ -328,9 +359,9 @@ export class LLMBridgeClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {})
+          ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -343,12 +374,14 @@ export class LLMBridgeClient {
       // Add assistant message to conversation history
       this.conversationHistory.push({
         role: MessageRole.Assistant,
-        content: responseContent
+        content: responseContent,
       });
 
       return responseContent;
     } catch (error) {
-      this.logger.error(`Error sending follow-up: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Error sending follow-up: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -381,8 +414,11 @@ export class LLMBridgeClient {
    * @param keepSystemPrompt Whether to keep the system prompt
    */
   clearConversationHistory(keepSystemPrompt: boolean = true): void {
-    if (keepSystemPrompt && this.conversationHistory.length > 0 &&
-        this.conversationHistory[0].role === MessageRole.System) {
+    if (
+      keepSystemPrompt &&
+      this.conversationHistory.length > 0 &&
+      this.conversationHistory[0].role === MessageRole.System
+    ) {
       this.conversationHistory = [this.conversationHistory[0]];
     } else {
       this.conversationHistory = [];
@@ -390,7 +426,7 @@ export class LLMBridgeClient {
       if (this.config.systemPrompt) {
         this.conversationHistory.push({
           role: MessageRole.System,
-          content: this.config.systemPrompt
+          content: this.config.systemPrompt,
         });
       }
     }
@@ -416,19 +452,19 @@ export class LLMBridgeClient {
       this.logger.info('Starting Ollama...');
       this.ollamaProcess = exec('ollama serve', { windowsHide: true });
 
-      this.ollamaProcess.stdout?.on('data', (data) => {
+      this.ollamaProcess.stdout?.on('data', data => {
         this.logger.debug(`Ollama stdout: ${data.toString()}`);
       });
 
-      this.ollamaProcess.stderr?.on('data', (data) => {
+      this.ollamaProcess.stderr?.on('data', data => {
         this.logger.debug(`Ollama stderr: ${data.toString()}`);
       });
 
-      this.ollamaProcess.on('error', (error) => {
+      this.ollamaProcess.on('error', error => {
         this.logger.error(`Error starting Ollama: ${error.message}`);
       });
 
-      this.ollamaProcess.on('exit', (code) => {
+      this.ollamaProcess.on('exit', code => {
         this.logger.info(`Ollama process exited with code ${code}`);
         this.ollamaProcess = null;
       });
@@ -448,6 +484,206 @@ export class LLMBridgeClient {
       }
 
       throw new Error('Failed to start Ollama server');
+    }
+  }
+
+  /**
+   * Stream a prompt to the LLM
+   * @param prompt User prompt
+   * @param handlers Event handlers for streaming
+   * @param includeTools Whether to include tool instructions
+   */
+  async streamPrompt(
+    prompt: string,
+    handlers: StreamingEventHandlers,
+    includeTools: boolean = true
+  ): Promise<void> {
+    try {
+      const formattedPrompt = includeTools ? this.formatPrompt(prompt) : prompt;
+      this.logger.info(`Streaming prompt to ${this.config.endpoint}`);
+
+      // Add user message to conversation history
+      this.conversationHistory.push({
+        role: MessageRole.User,
+        content: formattedPrompt,
+      });
+
+      // Ensure Ollama is running
+      await this.ensureOllamaRunning();
+
+      // Create request body with streaming enabled
+      const requestBody = this.createRequestBody(true);
+
+      // Send request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        this.logger.error(
+          `Request timed out after ${LLMBridgeClient.REQUEST_TIMEOUT / 1000} seconds`
+        );
+        if (handlers.onError) {
+          handlers.onError(
+            new Error(`Request timed out after ${LLMBridgeClient.REQUEST_TIMEOUT / 1000} seconds`)
+          );
+        }
+      }, LLMBridgeClient.REQUEST_TIMEOUT);
+
+      try {
+        const response = await fetch(this.config.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const error = new Error(`LLM API error: ${response.status} ${response.statusText}`);
+          if (handlers.onError) {
+            handlers.onError(error);
+          }
+          throw error;
+        }
+
+        if (!response.body) {
+          const error = new Error('Response body is null');
+          if (handlers.onError) {
+            handlers.onError(error);
+          }
+          throw error;
+        }
+
+        // Process the stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+
+            // Decode the chunk
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            // Process complete JSON objects
+            let startIndex = 0;
+            let endIndex = buffer.indexOf('\n', startIndex);
+
+            while (endIndex !== -1) {
+              const line = buffer.substring(startIndex, endIndex).trim();
+              if (line) {
+                try {
+                  const data = JSON.parse(line);
+
+                  // Extract content based on provider
+                  let content = '';
+                  switch (this.config.provider) {
+                    case LLMProvider.Ollama:
+                      content = data.message?.content || '';
+                      break;
+                    default:
+                      content =
+                        data.message?.content ||
+                        data.choices?.[0]?.delta?.content ||
+                        data.choices?.[0]?.message?.content ||
+                        '';
+                  }
+
+                  if (content) {
+                    fullContent += content;
+                    handlers.onContent(content);
+                  }
+
+                  // Check for tool calls
+                  if (data.message?.tool_calls) {
+                    for (const toolCall of data.message.tool_calls) {
+                      if (handlers.onToolCall) {
+                        handlers.onToolCall(toolCall);
+                      }
+                    }
+                  }
+
+                  // Check if streaming is complete
+                  if (data.done) {
+                    break;
+                  }
+                } catch (error) {
+                  this.logger.debug(`Error parsing JSON: ${error}`);
+                }
+              }
+
+              startIndex = endIndex + 1;
+              endIndex = buffer.indexOf('\n', startIndex);
+            }
+
+            // Keep the remaining part for the next iteration
+            buffer = buffer.substring(startIndex);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+
+        // Add assistant message to conversation history
+        this.conversationHistory.push({
+          role: MessageRole.Assistant,
+          content: fullContent,
+        });
+
+        // Check for tool calls in the full response
+        const toolCalls = this.extractToolCalls(fullContent);
+        if (toolCalls.length > 0) {
+          this.logger.info(`Extracted ${toolCalls.length} tool calls from response`);
+
+          // Process tool calls and add results to conversation history
+          for (const toolCall of toolCalls) {
+            try {
+              const result = await this.executeToolCall(toolCall);
+              this.conversationHistory.push({
+                role: MessageRole.Tool,
+                name: toolCall.function.name,
+                content: JSON.stringify(result),
+              });
+
+              if (handlers.onToolCall) {
+                handlers.onToolCall(toolCall);
+              }
+            } catch (error) {
+              this.logger.error(
+                `Error executing tool call: ${error instanceof Error ? error.message : String(error)}`
+              );
+              this.conversationHistory.push({
+                role: MessageRole.Tool,
+                name: toolCall.function.name,
+                content: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error),
+                }),
+              });
+            }
+          }
+        }
+
+        // Call the completion handler
+        handlers.onComplete();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error streaming prompt: ${error instanceof Error ? error.message : String(error)}`
+      );
+      if (handlers.onError) {
+        handlers.onError(error instanceof Error ? error : new Error(String(error)));
+      }
+      throw error;
     }
   }
 

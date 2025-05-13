@@ -6,12 +6,27 @@
  * @implements REQ-MCP-071 Process user prompts and generate responses
  * @implements REQ-MCP-072 Execute tool calls and handle results
  * @implements REQ-MCP-073 Manage conversation context
+ * @implements REQ-OLLAMA-012 Support streaming responses from Ollama
  */
 
 import * as vscode from 'vscode';
 import { LLMClient, LLMProvider } from './llmClient';
 import { MCPToolRegistry } from './mcpToolRegistry';
 import { MCPTool } from './mcpTypes';
+
+/**
+ * Streaming event handlers
+ */
+export interface StreamingEventHandlers {
+  /** Called when content is received */
+  onContent: (content: string) => void;
+  /** Called when a tool call is detected */
+  onToolCall?: (toolCall: any) => void;
+  /** Called when streaming is complete */
+  onComplete: () => void;
+  /** Called when an error occurs */
+  onError?: (error: Error) => void;
+}
 
 /**
  * MCP Bridge options
@@ -56,7 +71,7 @@ export enum MCPBridgeEventType {
   /** Tool call executed */
   ToolCallExecuted = 'tool-call-executed',
   /** Error occurred */
-  Error = 'error'
+  Error = 'error',
 }
 
 /**
@@ -112,7 +127,7 @@ export class MCPBridge {
         frequencyPenalty: options.frequencyPenalty,
         presencePenalty: options.presencePenalty,
         stop: options.stop,
-        provider: options.llmProvider
+        provider: options.llmProvider,
       },
       this.toolRegistry,
       outputChannel
@@ -167,6 +182,14 @@ export class MCPBridge {
    */
   getAllTools(): MCPTool[] {
     return this.toolRegistry.getAllTools();
+  }
+
+  /**
+   * Get the tool registry
+   * @returns Tool registry
+   */
+  getToolRegistry(): MCPToolRegistry {
+    return this.toolRegistry;
   }
 
   /**
@@ -225,6 +248,84 @@ export class MCPBridge {
   }
 
   /**
+   * Stream a message to the MCP server
+   * @param message Message to send
+   * @param handlers Event handlers for streaming
+   */
+  async streamMessage(message: string, handlers: StreamingEventHandlers): Promise<void> {
+    if (!this.isRunning) {
+      throw new Error('MCP bridge is not running');
+    }
+
+    try {
+      this.log(`Streaming message: ${message}`);
+      this.emitEvent(MCPBridgeEventType.PromptReceived, { prompt: message });
+
+      // Check if the LLM client supports streaming
+      if (typeof this.llmClient.streamPrompt !== 'function') {
+        this.log('LLM client does not support streaming, falling back to non-streaming mode');
+
+        // Fall back to non-streaming mode
+        const response = await this.sendPrompt(message);
+
+        // Simulate streaming with the full response
+        handlers.onContent(response);
+        handlers.onComplete();
+
+        return;
+      }
+
+      // Create streaming handlers
+      const streamingHandlers = {
+        onContent: (content: string) => {
+          handlers.onContent(content);
+          this.emitEvent(MCPBridgeEventType.ResponseReceived, {
+            response: content,
+            streaming: true,
+          });
+        },
+        onToolCall: (toolCall: any) => {
+          if (handlers.onToolCall) {
+            handlers.onToolCall(toolCall);
+          }
+          this.emitEvent(MCPBridgeEventType.ToolCallExecuted, {
+            toolCall,
+            streaming: true,
+          });
+        },
+        onComplete: () => {
+          handlers.onComplete();
+          this.emitEvent(MCPBridgeEventType.ResponseReceived, {
+            complete: true,
+            streaming: true,
+          });
+        },
+        onError: (error: Error) => {
+          if (handlers.onError) {
+            handlers.onError(error);
+          }
+          this.emitEvent(MCPBridgeEventType.Error, {
+            error,
+            streaming: true,
+          });
+        },
+      };
+
+      // Stream the prompt
+      await this.llmClient.streamPrompt(message, streamingHandlers);
+    } catch (error) {
+      this.log(
+        `Error streaming message: ${error instanceof Error ? error.message : String(error)}`
+      );
+      if (handlers.onError) {
+        handlers.onError(error instanceof Error ? error : new Error(String(error)));
+      }
+      this.emitEvent(MCPBridgeEventType.Error, { error });
+      throw error;
+    }
+  }
+
+  /**
    * Add an event listener
    * @param eventType Event type
    * @param listener Event listener
@@ -258,7 +359,7 @@ export class MCPBridge {
     const event: MCPBridgeEvent = {
       type: eventType,
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     const listeners = this.eventListeners.get(eventType) || [];
@@ -266,7 +367,9 @@ export class MCPBridge {
       try {
         listener(event);
       } catch (error) {
-        this.log(`Error in event listener: ${error instanceof Error ? error.message : String(error)}`);
+        this.log(
+          `Error in event listener: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
   }

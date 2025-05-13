@@ -1,0 +1,324 @@
+/**
+ * Preset Manager CSS
+ * 
+ * This file provides the styles for the Preset Manager view.
+ * 
+ * @implements REQ-MODEL-040 Create a ModelConfigurationPreset interface with fields for model name, parameters, and metadata
+ */
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  padding: 0;
+  margin: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.actions {
+  display: flex;
+  gap: 5px;
+}
+
+.actions button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.actions button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Loading and Empty States */
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.loading .codicon-loading {
+  animation: spin 1s infinite linear;
+  margin-right: 5px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty button {
+  margin-top: 10px;
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.empty button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+/* Preset List */
+.preset-list {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.preset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.preset-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.preset-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.preset-name {
+  font-weight: bold;
+}
+
+.preset-details {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.preset-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.preset-actions button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-size: 0.9em;
+}
+
+.preset-actions button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Form Container */
+.form-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.preset-form {
+  background-color: var(--vscode-editor-background);
+  border-radius: 4px;
+  padding: 20px;
+  width: 80%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.preset-form h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
+}
+
+.form-field {
+  margin-bottom: 15px;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  padding: 6px 8px;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.form-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-field input[type="text"]:focus,
+.form-field input[type="number"]:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-container input[type="range"] {
+  flex-grow: 1;
+}
+
+.range-value {
+  min-width: 30px;
+  text-align: right;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 6px 12px;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+}
+
+.form-actions button[type="button"] {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.form-actions button[type="button"]:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.form-actions button[type="submit"] {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.form-actions button[type="submit"]:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+/* Details Container */
+.details-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.preset-details-panel {
+  background-color: var(--vscode-editor-background);
+  border-radius: 4px;
+  padding: 20px;
+  width: 80%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.preset-details-panel h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
+}
+
+.details-content {
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  margin-bottom: 10px;
+}
+
+.detail-label {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 1em;
+  word-break: break-word;
+}
+
+.details-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.details-actions button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.details-actions button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}

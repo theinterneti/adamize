@@ -11,8 +11,8 @@
  */
 
 import * as vscode from 'vscode';
-import { MCPChatViewProvider } from '../../../ui/mcpChatView';
 import { LLMProvider } from '../../../mcp/llmClient';
+import { MCPChatViewProvider } from '../../../ui/mcpChatView';
 
 // Create a mock WebviewPanel instance to use in tests
 const mockWebviewPanel = {
@@ -20,18 +20,18 @@ const mockWebviewPanel = {
     html: '',
     onDidReceiveMessage: jest.fn(),
     postMessage: jest.fn().mockResolvedValue(undefined),
-    asWebviewUri: jest.fn().mockImplementation((uri) => uri)
+    asWebviewUri: jest.fn().mockImplementation(uri => uri),
   },
   onDidDispose: jest.fn(),
   reveal: jest.fn(),
-  dispose: jest.fn()
+  dispose: jest.fn(),
 };
 
 // Mock vscode namespace
 jest.mock('vscode', () => {
   const Uri = {
-    file: jest.fn().mockImplementation((path) => ({ path })),
-    parse: jest.fn().mockImplementation((url) => ({ url }))
+    file: jest.fn().mockImplementation(path => ({ path })),
+    parse: jest.fn().mockImplementation(url => ({ url })),
   };
 
   const WebviewPanel = jest.fn().mockImplementation(() => ({
@@ -39,11 +39,11 @@ jest.mock('vscode', () => {
       html: '',
       onDidReceiveMessage: jest.fn(),
       postMessage: jest.fn().mockResolvedValue(undefined),
-      asWebviewUri: jest.fn().mockImplementation((uri) => uri)
+      asWebviewUri: jest.fn().mockImplementation(uri => uri),
     },
     onDidDispose: jest.fn(),
     reveal: jest.fn(),
-    dispose: jest.fn()
+    dispose: jest.fn(),
   }));
 
   return {
@@ -53,16 +53,16 @@ jest.mock('vscode', () => {
       createWebviewPanel: jest.fn().mockImplementation(() => mockWebviewPanel),
       showQuickPick: jest.fn(),
       showInformationMessage: jest.fn(),
-      showErrorMessage: jest.fn()
+      showErrorMessage: jest.fn(),
     },
     commands: {
-      registerCommand: jest.fn()
+      registerCommand: jest.fn(),
     },
     ViewColumn: {
       One: 1,
       Two: 2,
-      Three: 3
-    }
+      Three: 3,
+    },
   };
 });
 
@@ -76,12 +76,12 @@ suite('MCP Chat View Test Suite', () => {
     // Create mocks
     extensionContext = {
       subscriptions: [],
-      extensionPath: '/path/to/extension'
+      extensionPath: '/path/to/extension',
     };
 
     outputChannel = {
       appendLine: jest.fn(),
-      show: jest.fn()
+      show: jest.fn(),
     };
 
     // Mock bridge info
@@ -90,35 +90,35 @@ suite('MCP Chat View Test Suite', () => {
         id: 'bridge1',
         bridge: {
           callTool: jest.fn().mockResolvedValue({ result: 'Tool result' }),
-          sendMessage: jest.fn().mockResolvedValue('LLM response')
+          sendMessage: jest.fn().mockResolvedValue('LLM response'),
         },
         options: {
           llmProvider: LLMProvider.Ollama,
           llmModel: 'llama2',
           llmEndpoint: 'http://localhost:11434',
-          systemPrompt: 'You are a helpful assistant'
+          systemPrompt: 'You are a helpful assistant',
         },
-        status: 'running'
+        status: 'running',
       },
       {
         id: 'bridge2',
         bridge: {
           callTool: jest.fn(),
-          sendMessage: jest.fn()
+          sendMessage: jest.fn(),
         },
         options: {
           llmProvider: LLMProvider.Ollama,
           llmModel: 'mistral',
           llmEndpoint: 'http://localhost:11434',
-          systemPrompt: 'You are a helpful assistant'
+          systemPrompt: 'You are a helpful assistant',
         },
-        status: 'stopped'
-      }
+        status: 'stopped',
+      },
     ];
 
     mcpBridgeManager = {
       getAllBridges: jest.fn().mockReturnValue(mockBridges),
-      getBridge: jest.fn().mockImplementation((id) => {
+      getBridge: jest.fn().mockImplementation(id => {
         if (id === 'bridge1') {
           return mockBridges[0].bridge;
         } else if (id === 'bridge2') {
@@ -126,14 +126,14 @@ suite('MCP Chat View Test Suite', () => {
         }
         return null;
       }),
-      getBridgeInfo: jest.fn().mockImplementation((id) => {
+      getBridgeInfo: jest.fn().mockImplementation(id => {
         if (id === 'bridge1') {
           return mockBridges[0];
         } else if (id === 'bridge2') {
           return mockBridges[1];
         }
         return null;
-      })
+      }),
     };
 
     // Create the provider
@@ -155,7 +155,7 @@ suite('MCP Chat View Test Suite', () => {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [expect.anything()]
+        localResourceRoots: [expect.anything()],
       }
     );
 
@@ -179,8 +179,8 @@ suite('MCP Chat View Test Suite', () => {
       command: 'addMessage',
       message: {
         role: 'user',
-        content: 'Hello'
-      }
+        content: 'Hello',
+      },
     });
 
     expect(panel.webview.postMessage).toHaveBeenCalledWith({
@@ -188,8 +188,8 @@ suite('MCP Chat View Test Suite', () => {
       message: {
         role: 'assistant',
         content: 'LLM response',
-        toolCalls: []
-      }
+        toolCalls: [],
+      },
     });
   });
 
@@ -198,7 +198,11 @@ suite('MCP Chat View Test Suite', () => {
     const panel = await provider.createOrShowPanel();
 
     // Simulate receiving a message from the webview
-    await provider.handleWebviewMessage({ command: 'sendMessage', text: 'Hello', bridgeId: 'bridge1' });
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
 
     // Check that the panel received the response
     expect(panel.webview.postMessage).toHaveBeenCalledWith({
@@ -206,8 +210,8 @@ suite('MCP Chat View Test Suite', () => {
       message: {
         role: 'assistant',
         content: 'LLM response',
-        toolCalls: []
-      }
+        toolCalls: [],
+      },
     });
   });
 
@@ -215,8 +219,24 @@ suite('MCP Chat View Test Suite', () => {
   test('should show tool executions in the chat', async () => {
     const panel = await provider.createOrShowPanel();
 
+    // Mock the parseToolCalls method to return some tool calls
+    const mockToolCalls = [
+      {
+        name: 'test-tool',
+        parameters: { param1: 'value1' },
+        result: 'Tool result',
+      },
+    ];
+
+    // Use jest.spyOn to mock the parseToolCalls method
+    jest.spyOn(provider as any, 'parseToolCalls').mockReturnValue(mockToolCalls);
+
     // Simulate receiving a message from the webview
-    await provider.handleWebviewMessage({ command: 'sendMessage', text: 'Hello', bridgeId: 'bridge1' });
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
 
     // Check that the panel received the tool calls
     expect(panel.webview.postMessage).toHaveBeenCalledWith({
@@ -224,9 +244,59 @@ suite('MCP Chat View Test Suite', () => {
       message: {
         role: 'assistant',
         content: 'LLM response',
-        toolCalls: []
-      }
+        toolCalls: mockToolCalls,
+      },
     });
+
+    // Restore the original implementation
+    (provider as any).parseToolCalls.mockRestore();
+  });
+
+  // TEST-UI-108: Support streaming responses
+  test('should support streaming responses', async () => {
+    const panel = await provider.createOrShowPanel();
+
+    // Mock the supportsStreaming method to return true
+    jest.spyOn(provider as any, 'supportsStreaming').mockReturnValue(true);
+
+    // Mock the generateMessageId method to return a fixed ID for testing
+    const mockMessageId = 'test-message-id';
+    jest.spyOn(provider as any, 'generateMessageId').mockReturnValue(mockMessageId);
+
+    // Mock the streamResponse method to do nothing
+    jest.spyOn(provider as any, 'streamResponse').mockResolvedValue(undefined);
+
+    // Simulate receiving a message from the webview
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
+
+    // Check that the panel received the initial empty message
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      command: 'addMessage',
+      message: {
+        role: 'assistant',
+        content: '',
+        toolCalls: [],
+        isStreaming: true,
+      },
+      messageId: mockMessageId,
+    });
+
+    // Check that streamResponse was called with the correct parameters
+    expect((provider as any).streamResponse).toHaveBeenCalledWith(
+      expect.anything(),
+      'Hello',
+      mockMessageId,
+      'bridge1'
+    );
+
+    // Restore the original implementations
+    (provider as any).supportsStreaming.mockRestore();
+    (provider as any).generateMessageId.mockRestore();
+    (provider as any).streamResponse.mockRestore();
   });
 
   // TEST-UI-105: Maintain conversation history
@@ -235,15 +305,23 @@ suite('MCP Chat View Test Suite', () => {
     await provider.createOrShowPanel();
 
     // Simulate receiving multiple messages from the webview
-    await provider.handleWebviewMessage({ command: 'sendMessage', text: 'Hello', bridgeId: 'bridge1' });
-    await provider.handleWebviewMessage({ command: 'sendMessage', text: 'How are you?', bridgeId: 'bridge1' });
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'How are you?',
+      bridgeId: 'bridge1',
+    });
 
     // Check that the conversation history is maintained
     expect(provider.getConversationHistory('bridge1')).toEqual([
       { role: 'user', content: 'Hello' },
       { role: 'assistant', content: 'LLM response', toolCalls: [] },
       { role: 'user', content: 'How are you?' },
-      { role: 'assistant', content: 'LLM response', toolCalls: [] }
+      { role: 'assistant', content: 'LLM response', toolCalls: [] },
     ]);
   });
 
@@ -252,7 +330,11 @@ suite('MCP Chat View Test Suite', () => {
     const panel = await provider.createOrShowPanel();
 
     // Simulate receiving a message from the webview
-    await provider.handleWebviewMessage({ command: 'sendMessage', text: 'Hello', bridgeId: 'bridge1' });
+    await provider.handleWebviewMessage({
+      command: 'sendMessage',
+      text: 'Hello',
+      bridgeId: 'bridge1',
+    });
 
     // Simulate clearing the conversation
     await provider.handleWebviewMessage({ command: 'clearConversation', bridgeId: 'bridge1' });
@@ -262,7 +344,7 @@ suite('MCP Chat View Test Suite', () => {
 
     // Check that the panel received the clear command
     expect(panel.webview.postMessage).toHaveBeenCalledWith({
-      command: 'clearMessages'
+      command: 'clearMessages',
     });
   });
 
@@ -281,9 +363,9 @@ suite('MCP Chat View Test Suite', () => {
       command: 'updateServerList',
       servers: [
         { id: 'bridge1', name: 'llama2 (running)', status: 'running' },
-        { id: 'bridge2', name: 'mistral (stopped)', status: 'stopped' }
+        { id: 'bridge2', name: 'mistral (stopped)', status: 'stopped' },
       ],
-      activeBridgeId: 'bridge2'
+      activeBridgeId: 'bridge2',
     });
   });
 });
