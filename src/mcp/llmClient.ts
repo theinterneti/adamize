@@ -19,7 +19,7 @@ export enum LLMProvider {
   Ollama = 'ollama',
   HuggingFace = 'huggingface',
   OpenAI = 'openai',
-  Custom = 'custom'
+  Custom = 'custom',
 }
 
 /**
@@ -67,7 +67,7 @@ export enum MessageRole {
   System = 'system',
   User = 'user',
   Assistant = 'assistant',
-  Tool = 'tool'
+  Tool = 'tool',
 }
 
 /**
@@ -153,7 +153,7 @@ export class LLMClient {
     // Initialize conversation history with system message
     this.conversationHistory.push({
       role: MessageRole.System,
-      content: this.options.systemPrompt || 'You are a helpful assistant.'
+      content: this.options.systemPrompt || 'You are a helpful assistant.',
     });
   }
 
@@ -171,7 +171,7 @@ export class LLMClient {
       // Add user message to conversation history
       this.conversationHistory.push({
         role: MessageRole.User,
-        content: formattedPrompt
+        content: formattedPrompt,
       });
 
       // Create request body based on provider
@@ -181,9 +181,9 @@ export class LLMClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.options.apiKey ? { 'Authorization': `Bearer ${this.options.apiKey}` } : {})
+          ...(this.options.apiKey ? { Authorization: `Bearer ${this.options.apiKey}` } : {}),
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -196,7 +196,7 @@ export class LLMClient {
       // Add assistant message to conversation history
       this.conversationHistory.push({
         role: MessageRole.Assistant,
-        content: responseContent
+        content: responseContent,
       });
 
       // Check for tool calls in the response
@@ -211,14 +211,18 @@ export class LLMClient {
             this.conversationHistory.push({
               role: MessageRole.Tool,
               name: toolCall.function.name,
-              content: JSON.stringify(result)
+              content: JSON.stringify(result),
             });
           } catch (error) {
-            this.log(`Error executing tool call: ${error instanceof Error ? error.message : String(error)}`);
+            this.log(
+              `Error executing tool call: ${error instanceof Error ? error.message : String(error)}`
+            );
             this.conversationHistory.push({
               role: MessageRole.Tool,
               name: toolCall.function.name,
-              content: JSON.stringify({ error: error instanceof Error ? error.message : String(error) })
+              content: JSON.stringify({
+                error: error instanceof Error ? error.message : String(error),
+              }),
             });
           }
         }
@@ -244,10 +248,10 @@ export class LLMClient {
       messages: this.conversationHistory.map(msg => ({
         role: msg.role.toLowerCase(),
         content: msg.content,
-        ...(msg.name ? { name: msg.name } : {})
+        ...(msg.name ? { name: msg.name } : {}),
       })),
       temperature: this.options.temperature || 0.7,
-      max_tokens: this.options.maxTokens || 1000
+      max_tokens: this.options.maxTokens || 1000,
     };
 
     // Add provider-specific parameters
@@ -255,13 +259,13 @@ export class LLMClient {
       case LLMProvider.Ollama:
         return {
           ...baseBody,
-          stream: false
+          stream: false,
         };
       case LLMProvider.HuggingFace:
         return {
           ...baseBody,
           top_p: this.options.topP || 0.9,
-          repetition_penalty: 1.0
+          repetition_penalty: 1.0,
         };
       case LLMProvider.OpenAI:
         return {
@@ -269,7 +273,7 @@ export class LLMClient {
           top_p: this.options.topP || 0.9,
           frequency_penalty: this.options.frequencyPenalty || 0,
           presence_penalty: this.options.presencePenalty || 0,
-          ...(this.options.stop ? { stop: this.options.stop } : {})
+          ...(this.options.stop ? { stop: this.options.stop } : {}),
         };
       default:
         return baseBody;
@@ -292,11 +296,13 @@ export class LLMClient {
         return data.choices?.[0]?.message?.content || '';
       default:
         // Try to extract content from various formats
-        return data.message?.content ||
-               data.generated_text ||
-               data.choices?.[0]?.message?.content ||
-               data.response ||
-               '';
+        return (
+          data.message?.content ||
+          data.generated_text ||
+          data.choices?.[0]?.message?.content ||
+          data.response ||
+          ''
+        );
     }
   }
 
@@ -314,14 +320,16 @@ export class LLMClient {
 
         // Check if it's a tool call
         if (jsonData.tool && jsonData.function && jsonData.parameters) {
-          return [{
-            id: `call-${Date.now()}`,
-            type: 'function',
-            function: {
-              name: jsonData.function,
-              arguments: JSON.stringify(jsonData.parameters)
-            }
-          }];
+          return [
+            {
+              id: `call-${Date.now()}`,
+              type: 'function',
+              function: {
+                name: jsonData.function,
+                arguments: JSON.stringify(jsonData.parameters),
+              },
+            },
+          ];
         }
       }
 
@@ -332,14 +340,16 @@ export class LLMClient {
           try {
             const jsonData = JSON.parse(jsonStr);
             if (jsonData.tool && jsonData.function && jsonData.parameters) {
-              return [{
-                id: `call-${Date.now()}`,
-                type: 'function',
-                function: {
-                  name: jsonData.function,
-                  arguments: JSON.stringify(jsonData.parameters)
-                }
-              }];
+              return [
+                {
+                  id: `call-${Date.now()}`,
+                  type: 'function',
+                  function: {
+                    name: jsonData.function,
+                    arguments: JSON.stringify(jsonData.parameters),
+                  },
+                },
+              ];
             }
           } catch (e) {
             // Ignore parsing errors for invalid JSON
@@ -349,7 +359,9 @@ export class LLMClient {
 
       return [];
     } catch (error) {
-      this.log(`Error extracting tool calls: ${error instanceof Error ? error.message : String(error)}`);
+      this.log(
+        `Error extracting tool calls: ${error instanceof Error ? error.message : String(error)}`
+      );
       return [];
     }
   }
@@ -387,9 +399,9 @@ export class LLMClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.options.apiKey ? { 'Authorization': `Bearer ${this.options.apiKey}` } : {})
+          ...(this.options.apiKey ? { Authorization: `Bearer ${this.options.apiKey}` } : {}),
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -402,12 +414,14 @@ export class LLMClient {
       // Add assistant message to conversation history
       this.conversationHistory.push({
         role: MessageRole.Assistant,
-        content: responseContent
+        content: responseContent,
       });
 
       return responseContent;
     } catch (error) {
-      this.log(`Error sending follow-up: ${error instanceof Error ? error.message : String(error)}`);
+      this.log(
+        `Error sending follow-up: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -440,15 +454,44 @@ export class LLMClient {
    * @param keepSystemPrompt Whether to keep the system prompt
    */
   clearConversationHistory(keepSystemPrompt: boolean = true): void {
-    if (keepSystemPrompt && this.conversationHistory.length > 0 &&
-        this.conversationHistory[0].role === MessageRole.System) {
+    if (
+      keepSystemPrompt &&
+      this.conversationHistory.length > 0 &&
+      this.conversationHistory[0].role === MessageRole.System
+    ) {
       this.conversationHistory = [this.conversationHistory[0]];
     } else {
       this.conversationHistory = [];
       // Re-add system message
       this.conversationHistory.push({
         role: MessageRole.System,
-        content: this.options.systemPrompt || 'You are a helpful assistant.'
+        content: this.options.systemPrompt || 'You are a helpful assistant.',
+      });
+    }
+  }
+
+  /**
+   * Update the system prompt
+   * @param systemPrompt New system prompt
+   */
+  updateSystemPrompt(systemPrompt: string): void {
+    this.log(`Updating system prompt: ${systemPrompt}`);
+
+    // Update the options
+    this.options.systemPrompt = systemPrompt;
+
+    // Update the system message in the conversation history
+    if (
+      this.conversationHistory.length > 0 &&
+      this.conversationHistory[0].role === MessageRole.System
+    ) {
+      // Replace existing system message
+      this.conversationHistory[0].content = systemPrompt;
+    } else {
+      // Add system message at the beginning
+      this.conversationHistory.unshift({
+        role: MessageRole.System,
+        content: systemPrompt,
       });
     }
   }

@@ -228,6 +228,22 @@ export class MCPBridge {
   }
 
   /**
+   * Get the conversation history
+   * @returns Conversation history
+   */
+  getConversationHistory(): any[] {
+    return this.llmClient.getConversationHistory();
+  }
+
+  /**
+   * Update the system prompt
+   * @param systemPrompt New system prompt
+   */
+  updateSystemPrompt(systemPrompt: string): void {
+    this.llmClient.updateSystemPrompt(systemPrompt);
+  }
+
+  /**
    * Send a message to the MCP server
    * @param message Message to send
    * @returns Server response

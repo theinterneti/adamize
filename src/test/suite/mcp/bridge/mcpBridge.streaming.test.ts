@@ -12,73 +12,71 @@
  * - TEST-OLLAMA-012-007: Test that the bridge emits streaming events correctly
  */
 
-import * as vscode from 'vscode';
-import { MCPBridge } from '../../../../mcp/bridge/mcpBridge';
-import { VSCodeLogger } from '../../../../mcp/bridge/vscodeLogger';
-import { LLMBridgeClient } from '../../../../mcp/bridge/llmClient';
-import { MCPToolRegistry } from '../../../../mcp/bridge/toolRegistry';
-import { LLMProvider } from '../../../../mcp/llmClient';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import * as vscode from 'vscode';
+import { LLMClient, LLMProvider } from '../../../../mcp/llmClient';
+import { MCPBridge, MCPBridgeEventType } from '../../../../mcp/mcpBridge';
+import { MCPToolRegistry } from '../../../../mcp/mcpToolRegistry';
 
-// Mock the LLMBridgeClient
-jest.mock('../../../../mcp/bridge/llmClient');
+// Mock the LLMClient and MCPToolRegistry classes
+jest.mock('../../../../mcp/llmClient');
+jest.mock('../../../../mcp/mcpToolRegistry');
 
 describe('MCP Bridge Streaming', () => {
   let bridge: MCPBridge;
-  let logger: VSCodeLogger;
-  let llmClient: jest.Mocked<LLMBridgeClient>;
-  let toolRegistry: MCPToolRegistry;
-  let mockOutputChannel: vscode.OutputChannel;
+  let outputChannel: vscode.OutputChannel;
+  let llmClientMock: jest.Mocked<LLMClient>;
+  let toolRegistryMock: jest.Mocked<MCPToolRegistry>;
 
   beforeEach(() => {
     // Reset mocks
-    jest.resetAllMocks();
+    jest.clearAllMocks();
 
-    // Create mock output channel
-    mockOutputChannel = {
+    // Create a mock output channel
+    outputChannel = {
       appendLine: jest.fn(),
-      append: jest.fn(),
-      clear: jest.fn(),
       show: jest.fn(),
-      hide: jest.fn(),
-      dispose: jest.fn(),
-      name: 'Test Output Channel'
     } as unknown as vscode.OutputChannel;
 
-    // Create logger
-    logger = new VSCodeLogger(mockOutputChannel);
+    // Set up mocks
+    (LLMClient as jest.Mock).mockImplementation(() => ({
+      sendPrompt: jest.fn().mockImplementation(async () => 'Test response'),
+      clearConversationHistory: jest.fn(),
+      streamPrompt: jest.fn().mockImplementation(async (prompt, handlers) => {
+        // Simulate streaming by calling the handlers
+        handlers.onContent('Hello');
+        handlers.onContent(' world');
+        handlers.onContent('!');
+        handlers.onComplete();
+      }),
+    }));
 
-    // Create tool registry
-    toolRegistry = new MCPToolRegistry(logger);
+    (MCPToolRegistry as jest.Mock).mockImplementation(() => ({
+      registerTool: jest.fn(),
+      unregisterTool: jest.fn(),
+      getAllTools: jest.fn().mockReturnValue([]),
+      executeFunction: jest.fn().mockResolvedValue({ result: 'Tool execution result' }),
+    }));
 
-    // Create mock LLM client
-    llmClient = new LLMBridgeClient(
-      {
-        provider: LLMProvider.Ollama,
-        model: 'llama3',
-        endpoint: 'http://localhost:11434/v1/chat/completions',
-        systemPrompt: 'You are a helpful assistant.',
-        temperature: 0.7,
-        maxTokens: 1000
-      },
-      toolRegistry,
-      logger
-    ) as jest.Mocked<LLMBridgeClient>;
-
-    // Create MCP bridge
-    bridge = new MCPBridge({
-      id: 'test-bridge',
-      name: 'Test Bridge',
+    // Create the bridge options
+    const options = {
       llmProvider: LLMProvider.Ollama,
       llmModel: 'llama3',
       llmEndpoint: 'http://localhost:11434/v1/chat/completions',
       systemPrompt: 'You are a helpful assistant.',
       temperature: 0.7,
-      maxTokens: 1000
-    }, logger);
+      maxTokens: 1000,
+    };
 
-    // Replace the LLM client with our mock
-    (bridge as any).llmClient = llmClient;
+    // Create the bridge
+    bridge = new MCPBridge(options, outputChannel);
+
+    // Get the mocked instances
+    llmClientMock = (bridge as any).llmClient;
+    toolRegistryMock = (bridge as any).toolRegistry;
+
+    // Start the bridge
+    bridge.start();
   });
 
   /**
@@ -86,7 +84,7 @@ describe('MCP Bridge Streaming', () => {
    */
   test('should stream responses from Ollama', async () => {
     // Set up the mock
-    llmClient.streamPrompt.mockImplementation(async (prompt, handlers) => {
+    llmClientMock.streamPrompt.mockImplementation(async (prompt, handlers) => {
       // Simulate streaming
       handlers.onContent('Hello');
       handlers.onContent(' world');
@@ -103,18 +101,18 @@ describe('MCP Bridge Streaming', () => {
     await bridge.streamMessage('Test prompt', {
       onContent,
       onToolCall,
-      onComplete
+      onComplete,
     });
 
     // Check that streamPrompt was called with the correct parameters
-    expect(llmClient.streamPrompt).toHaveBeenCalledWith(
+    expect(llmClientMock.streamPrompt).toHaveBeenCalledWith(
       'Test prompt',
       expect.objectContaining({
         onContent: expect.any(Function),
         onToolCall: expect.any(Function),
-        onComplete: expect.any(Function)
-      }),
-      true
+        onComplete: expect.any(Function),
+        onError: expect.any(Function),
+      })
     );
 
     // Check that the event handlers were called correctly
@@ -130,7 +128,7 @@ describe('MCP Bridge Streaming', () => {
    */
   test('should handle streaming errors gracefully', async () => {
     // Set up the mock to throw an error
-    llmClient.streamPrompt.mockRejectedValue(new Error('Network error'));
+    llmClientMock.streamPrompt.mockRejectedValue(new Error('Network error'));
 
     // Create event handlers
     const onContent = jest.fn();
@@ -139,14 +137,40 @@ describe('MCP Bridge Streaming', () => {
     const onError = jest.fn();
 
     // Call streamMessage and expect it to throw
-    await expect(bridge.streamMessage('Test prompt', {
-      onContent,
-      onToolCall,
-      onComplete,
-      onError
-    })).rejects.toThrow('Network error');
+    await expect(
+      bridge.streamMessage('Test prompt', {
+        onContent,
+        onToolCall,
+        onComplete,
+        onError,
+      })
+    ).rejects.toThrow('Network error');
 
     // Check that the error handler was called
     expect(onError).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  /**
+   * @test TEST-OLLAMA-012-007: Test that the bridge emits streaming events correctly
+   */
+  test('should emit streaming events correctly', async () => {
+    // Create a listener
+    const listener = jest.fn();
+
+    // Add the listener
+    bridge.addEventListener(MCPBridgeEventType.ResponseReceived, listener);
+
+    // Create event handlers
+    const onContent = jest.fn();
+    const onComplete = jest.fn();
+
+    // Call streamMessage
+    await bridge.streamMessage('Test prompt', {
+      onContent,
+      onComplete,
+    });
+
+    // Check that the listener was called for each content chunk and completion
+    expect(listener).toHaveBeenCalledTimes(4); // 3 content chunks + 1 completion
   });
 });
