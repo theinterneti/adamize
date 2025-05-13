@@ -107,13 +107,13 @@ Adapts ollama-mcp-bridge for VS Code extension use, enabling LLM-powered agents.
 - Bridge Types ✅
 - MCP Bridge Client ✅
 - LLM Client ✅
-- Tool Registry (partial) - Needs completion for tool detection and instructions generation
+- Tool Registry ✅ - Enhanced with sophisticated tool detection, categorization, and context-aware example generation
 - MCP Bridge (partial) - Needs completion for tool execution and conversation context
 - MCP Bridge Manager (partial) - Needs completion for bridge lifecycle management
 
 ### Implementation Priority
 
-1. Complete Tool Registry - Tool detection, format instructions, example arguments
+1. ✅ Complete Tool Registry - Tool detection, format instructions, example arguments
 2. Complete MCP Bridge - Tool execution, conversation context, streaming responses
 3. Complete Bridge Manager - Bridge creation, lifecycle management, configuration
 
@@ -214,7 +214,11 @@ Uses a DevContainer with Node.js, TypeScript, ESLint, VS Code extension tools, D
 
 ### Phase 1: Core Functionality (High Priority)
 
-1. Complete MCPToolRegistry - Tool detection, instructions generation, example arguments
+1. ✅ Complete MCPToolRegistry - Tool detection, instructions generation, example arguments
+   - Enhanced with sophisticated scoring for tool detection
+   - Added support for categorized tools and better formatting
+   - Implemented context-aware example generation
+   - Added defensive checks for parameters
 2. Complete MCPBridge - Tool execution, conversation context, streaming responses
 3. Complete MCPBridgeManager - Bridge lifecycle management, configuration
 

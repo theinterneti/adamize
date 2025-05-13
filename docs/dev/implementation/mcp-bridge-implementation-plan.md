@@ -8,17 +8,17 @@ The MCP Bridge is a critical component that connects local LLMs (through Ollama)
 
 ## Current Status
 
-| Component | Status | Description |
-|-----------|--------|-------------|
-| VS Code Logger | ✅ Complete | Logging adapter for VS Code |
-| Bridge Types | ✅ Complete | Type definitions for bridge components |
-| MCP Bridge Client | ✅ Complete | Client for communicating with MCP servers |
-| LLM Client | ✅ Complete | Client for interacting with LLMs |
-| Tool Registry | ⚠️ Partial | Registry for MCP tools and functions |
-| MCP Bridge | ⚠️ Partial | Core bridge component |
-| MCP Bridge Manager | ⚠️ Partial | Manager for MCP bridges |
-| MCPChatView | ⚠️ Partial | Chat interface for LLMs |
-| MCPServerExplorerView | ⚠️ Partial | Server management UI |
+| Component             | Status      | Description                                                                                                             |
+| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| VS Code Logger        | ✅ Complete | Logging adapter for VS Code                                                                                             |
+| Bridge Types          | ✅ Complete | Type definitions for bridge components                                                                                  |
+| MCP Bridge Client     | ✅ Complete | Client for communicating with MCP servers                                                                               |
+| LLM Client            | ✅ Complete | Client for interacting with LLMs                                                                                        |
+| Tool Registry         | ✅ Complete | Registry for MCP tools and functions with enhanced tool detection, categorization, and context-aware example generation |
+| MCP Bridge            | ⚠️ Partial  | Core bridge component                                                                                                   |
+| MCP Bridge Manager    | ⚠️ Partial  | Manager for MCP bridges                                                                                                 |
+| MCPChatView           | ⚠️ Partial  | Chat interface for LLMs                                                                                                 |
+| MCPServerExplorerView | ⚠️ Partial  | Server management UI                                                                                                    |
 
 ## Implementation Plan
 
@@ -26,65 +26,90 @@ The implementation plan is divided into four phases, with each phase focusing on
 
 ### Phase 1: Core Functionality (High Priority)
 
-#### 1. Complete MCPToolRegistry
+#### 1. ✅ Complete MCPToolRegistry
 
-The Tool Registry is responsible for registering, discovering, and managing MCP tools.
+The Tool Registry is responsible for registering, discovering, and managing MCP tools. This component has been completed with enhanced functionality.
 
-**Key Tasks:**
-- Implement `detectToolFromPrompt` method to identify the most appropriate tool for a given prompt
-- Implement `getToolInstructions` method to generate format instructions for tools
-- Implement `generateExampleArgs` method to create example arguments for tool schemas
-- Add support for tool categorization and filtering
-- Add comprehensive tests for all methods
+**Completed Tasks:**
 
-**Implementation Details:**
+- Implemented `detectToolsForPrompt` method with sophisticated scoring algorithm
+- Implemented `detectToolFromPrompt` method to identify the most appropriate tool for a given prompt
+- Enhanced `getToolInstructions` method with support for categorized tools and better formatting
+- Improved `generateExampleArgs` method with context-aware example generation
+- Added support for tool categorization and filtering
+- Added defensive checks for parameters to improve robustness
+- Added comprehensive tests for all methods
+
+**Implementation Highlights:**
+
 ```typescript
 // src/mcp/mcpToolRegistry.ts
 
 /**
- * Detect the most appropriate tool for a given prompt
+ * Detect appropriate tools for a user prompt
  * @param prompt User prompt
- * @returns Tool name or undefined if no tool is detected
+ * @param maxTools Maximum number of tools to return (default: 3)
+ * @returns Array of tool names sorted by relevance
+ * @implements REQ-MCP-051 Detect appropriate tools from user prompts
  */
-detectToolFromPrompt(prompt: string): string | undefined {
-  this.log(`Detecting tool from prompt: ${prompt}`);
-
-  const promptLower = prompt.toLowerCase();
-  const toolScores: Array<{ name: string; score: number }> = [];
+detectToolsForPrompt(prompt: string, maxTools: number = 3): string[] {
+  // ...
 
   // Score each tool based on keyword matches and priority
-  for (const [toolName, _tool] of this.tools.entries()) {
-    const metadata = this.metadata.get(toolName);
-    if (!metadata) continue;
+  for (const [toolName, tool] of toolEntries) {
+    // ...
 
-    let score = 0;
-
-    // Score based on keyword matches
+    // Score based on keyword matches with different weights
     for (const keyword of metadata.keywords) {
-      if (promptLower.includes(keyword.toLowerCase())) {
+      const keywordLower = keyword.toLowerCase();
+      // Exact match gets higher score
+      if (promptLower === keywordLower) {
+        score += 5;
+      }
+      // Word boundary match gets medium score
+      else if (new RegExp(`\\b${keywordLower}\\b`).test(promptLower)) {
+        score += 3;
+      }
+      // Substring match gets lower score
+      else if (promptLower.includes(keywordLower)) {
         score += 1;
       }
     }
 
-    // Add priority if available
-    if (metadata.priority !== undefined) {
-      score += metadata.priority;
+    // Score based on function names and descriptions
+    // Score based on categories
+    // ...
+  }
+
+  // ...
+}
+
+/**
+ * Generate example arguments for a function
+ * @param toolName Tool name
+ * @param functionName Function name
+ * @returns Example arguments
+ * @implements REQ-MCP-053 Generate example arguments for tool schemas
+ */
+generateExampleArgs(toolName: string, functionName: string): Record<string, unknown> | undefined {
+  // ...
+
+  // Generate context-aware examples based on function and tool names
+  const contextHints = {
+    toolName: toolName.toLowerCase(),
+    funcName: functionName.toLowerCase(),
+    description: tool.description.toLowerCase(),
+    funcDescription: func.description.toLowerCase(),
+  };
+
+  // Check if parameters is iterable
+  if (func.parameters && Array.isArray(func.parameters)) {
+    for (const param of func.parameters) {
+      exampleArgs[param.name] = this.generateExampleValue(param, contextHints);
     }
-
-    toolScores.push({ name: toolName, score });
   }
 
-  // Sort by score (descending)
-  toolScores.sort((a, b) => b.score - a.score);
-
-  // Return the highest scoring tool if it has a score > 0
-  if (toolScores.length > 0 && toolScores[0].score > 0) {
-    this.log(`Detected tool: ${toolScores[0].name} (score: ${toolScores[0].score})`);
-    return toolScores[0].name;
-  }
-
-  this.log('No tool detected');
-  return undefined;
+  // ...
 }
 ```
 
@@ -93,6 +118,7 @@ detectToolFromPrompt(prompt: string): string | undefined {
 The MCP Bridge is the core component that connects LLMs with MCP tools.
 
 **Key Tasks:**
+
 - Implement `executeToolCall` method to execute tool calls
 - Implement `processMessage` method with tool detection
 - Implement streaming support for real-time responses
@@ -100,6 +126,7 @@ The MCP Bridge is the core component that connects LLMs with MCP tools.
 - Add comprehensive tests for all methods
 
 **Implementation Details:**
+
 ```typescript
 // src/mcp/mcpBridge.ts
 
@@ -142,30 +169,30 @@ async processMessage(message: string): Promise<string> {
     // Execute tool calls if any
     if (toolCalls.length > 0) {
       this.log(`Found ${toolCalls.length} tool calls in response`);
-      
+
       for (const toolCall of toolCalls) {
         this.log(`Executing tool call: ${toolCall.tool}.${toolCall.function}`);
-        
+
         try {
           const result = await this.executeToolCall(toolCall);
           this.log(`Tool call result: ${JSON.stringify(result)}`);
-          
+
           // Add tool call result to conversation history
           this.llmClient.addToolCallResult(toolCall, result);
         } catch (error) {
           this.log(`Error executing tool call: ${error}`);
-          
+
           // Add error to conversation history
           this.llmClient.addToolCallError(toolCall, error);
         }
       }
-      
+
       // Generate a new response with tool call results
       const finalResponse = await this.llmClient.generateResponseWithToolResults();
-      
+
       this.log(`Final response: ${finalResponse}`);
       this.emitEvent(MCPBridgeEventType.ResponseReceived, { response: finalResponse });
-      
+
       return finalResponse;
     }
 
@@ -186,6 +213,7 @@ async processMessage(message: string): Promise<string> {
 The Bridge Manager handles the lifecycle of MCP bridges.
 
 **Key Tasks:**
+
 - Implement `createBridge` method to create and configure bridges
 - Implement `startBridge` and `stopBridge` methods for lifecycle management
 - Implement bridge configuration management
@@ -193,6 +221,7 @@ The Bridge Manager handles the lifecycle of MCP bridges.
 - Add comprehensive tests for all methods
 
 **Implementation Details:**
+
 ```typescript
 // src/mcp/mcpBridgeManager.ts
 
@@ -240,6 +269,7 @@ createBridge(options: MCPBridgeOptions): string {
 The Chat View provides a user interface for interacting with the MCP Bridge.
 
 **Key Tasks:**
+
 - Implement message sending and receiving
 - Implement conversation history management
 - Add support for streaming responses
@@ -251,6 +281,7 @@ The Chat View provides a user interface for interacting with the MCP Bridge.
 The Server Explorer View provides a UI for managing MCP servers.
 
 **Key Tasks:**
+
 - Implement server management (add, remove, start, stop)
 - Implement tool discovery and display
 - Add support for server configuration
@@ -261,6 +292,7 @@ The Server Explorer View provides a UI for managing MCP servers.
 #### 1. Create Integration Tests
 
 **Key Tasks:**
+
 - Test MCP Bridge with Tool Registry
 - Test MCP Bridge with LLM Client
 - Test MCP Bridge Manager with MCP Bridge
@@ -269,6 +301,7 @@ The Server Explorer View provides a UI for managing MCP servers.
 #### 2. Create End-to-End Tests
 
 **Key Tasks:**
+
 - Test extension activation
 - Test Ollama integration
 - Test MCP server connection
@@ -278,6 +311,7 @@ The Server Explorer View provides a UI for managing MCP servers.
 #### 3. Implement Skipped Tests
 
 **Key Tasks:**
+
 - Identify and implement skipped tests
 - Ensure all components have comprehensive test coverage
 - Fix any failing tests
@@ -287,6 +321,7 @@ The Server Explorer View provides a UI for managing MCP servers.
 #### 1. Update Documentation
 
 **Key Tasks:**
+
 - Update README.md with project overview and setup
 - Update API documentation for all components
 - Create user guides for the extension
@@ -295,6 +330,7 @@ The Server Explorer View provides a UI for managing MCP servers.
 #### 2. Add Configuration Options
 
 **Key Tasks:**
+
 - Add MCP Bridge configuration options
 - Add Tool Registry configuration options
 - Add UI configuration options
@@ -305,29 +341,35 @@ The Server Explorer View provides a UI for managing MCP servers.
 Once the components are implemented, the following configuration steps will be needed:
 
 1. **Install Ollama**
+
    - Download and install Ollama from [ollama.ai](https://ollama.ai/)
    - Pull a compatible model: `ollama pull qwen3-coder`
 
 2. **Configure Ollama in VS Code**
+
    - Open VS Code settings
    - Set `adamize.ollama.enabled` to `true`
    - Set `adamize.ollama.model` to your preferred model (e.g., `qwen3-coder`)
    - Set `adamize.ollama.baseUrl` to your Ollama server URL (default: `http://localhost:11434`)
 
 3. **Start Ollama Server**
+
    - Use the command `Adamize Models: Start Ollama Server`
    - Verify that Ollama is running
 
 4. **Open Ollama Chat**
+
    - Use the command `Adamize Models: Open Ollama Chat`
    - Test that you can send messages and receive responses
 
 5. **Configure MCP Bridge**
+
    - Open VS Code settings
    - Set `adamize.mcp.enabled` to `true`
    - Set `adamize.mcp.serverUrl` to your MCP server URL (default: `http://localhost:8000`)
 
 6. **Start MCP Bridge**
+
    - Use the command `Adamize: Start MCP Server`
    - Verify that the MCP Bridge is running
 
