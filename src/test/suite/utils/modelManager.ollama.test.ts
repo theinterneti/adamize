@@ -13,9 +13,9 @@
  * - TEST-OLLAMA-013-004: Test that the manager handles Ollama API errors gracefully
  */
 
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import * as vscode from 'vscode';
 import { ModelManager } from '../../../utils/modelManager';
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -37,7 +37,7 @@ describe('Model Manager Ollama Integration', () => {
       show: jest.fn(),
       hide: jest.fn(),
       dispose: jest.fn(),
-      name: 'Test Output Channel'
+      name: 'Test Output Channel',
     } as unknown as vscode.OutputChannel;
 
     // Create mock extension context
@@ -47,19 +47,19 @@ describe('Model Manager Ollama Integration', () => {
       globalStorageUri: { fsPath: '/test/global/storage/path' },
       workspaceState: {
         get: jest.fn(),
-        update: jest.fn()
+        update: jest.fn(),
       },
       globalState: {
         get: jest.fn(),
-        update: jest.fn()
+        update: jest.fn(),
       },
       extensionUri: { fsPath: '/test/extension/path' },
       environmentVariableCollection: {} as any,
       asAbsolutePath: (relativePath: string) => `/test/extension/path/${relativePath}`,
       storageUri: { fsPath: '/test/storage/path' },
       logUri: { fsPath: '/test/log/path' },
-      extensionMode: vscode.ExtensionMode.Development,
-      logPath: '/test/log/path'
+      extensionMode: 1, // Use 1 for Development mode
+      logPath: '/test/log/path',
     } as unknown as vscode.ExtensionContext;
 
     // Create model manager
@@ -86,8 +86,8 @@ describe('Model Manager Ollama Integration', () => {
               family: 'llama',
               families: ['llama'],
               parameter_size: '8B',
-              quantization_level: 'Q4_0'
-            }
+              quantization_level: 'Q4_0',
+            },
           },
           {
             name: 'codellama',
@@ -100,18 +100,21 @@ describe('Model Manager Ollama Integration', () => {
               family: 'llama',
               families: ['llama'],
               parameter_size: '7B',
-              quantization_level: 'Q4_0'
-            }
-          }
-        ]
-      })
+              quantization_level: 'Q4_0',
+            },
+          },
+        ],
+      }),
     });
 
     // Call discoverOllamaModels
     const models = await modelManager.discoverOllamaModels();
 
     // Check that fetch was called with the correct URL
-    expect(global.fetch).toHaveBeenCalledWith('http://localhost:11434/api/tags', expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:11434/api/tags',
+      expect.any(Object)
+    );
 
     // Check that the models were returned correctly
     expect(models).toHaveLength(2);
@@ -133,19 +136,19 @@ describe('Model Manager Ollama Integration', () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
-        status: 'success'
-      })
+        status: 'success',
+      }),
     });
 
     // Create a mock progress
     const mockProgress = {
-      report: jest.fn()
+      report: jest.fn(),
     };
 
     // Create a mock token
     const mockToken = {
       isCancellationRequested: false,
-      onCancellationRequested: jest.fn()
+      onCancellationRequested: jest.fn(),
     };
 
     // Mock window.withProgress
@@ -162,12 +165,12 @@ describe('Model Manager Ollama Integration', () => {
       expect.objectContaining({
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: 'llama3',
-          stream: false
-        })
+          stream: false,
+        }),
       })
     );
 
@@ -183,8 +186,8 @@ describe('Model Manager Ollama Integration', () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
-        status: 'success'
-      })
+        status: 'success',
+      }),
     });
 
     // Call removeOllamaModel
@@ -196,11 +199,11 @@ describe('Model Manager Ollama Integration', () => {
       expect.objectContaining({
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'llama3'
-        })
+          name: 'llama3',
+        }),
       })
     );
   });
@@ -213,17 +216,46 @@ describe('Model Manager Ollama Integration', () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 404,
-      statusText: 'Not Found'
+      statusText: 'Not Found',
     });
 
     // Call discoverOllamaModels and expect it to return an empty array
     const models = await modelManager.discoverOllamaModels();
     expect(models).toEqual([]);
 
-    // Call pullOllamaModel and expect it to throw
-    await expect(modelManager.pullOllamaModel('llama3')).rejects.toThrow('Ollama API error: 404 Not Found');
+    // For pullOllamaModel, we need to mock withProgress to make the test work
+    vscode.window.withProgress = jest.fn().mockImplementation((options, task) => {
+      // Create a mock progress
+      const mockProgress = {
+        report: jest.fn(),
+      };
 
-    // Call removeOllamaModel and expect it to throw
-    await expect(modelManager.removeOllamaModel('llama3')).rejects.toThrow('Ollama API error: 404 Not Found');
+      // Create a mock token
+      const mockToken = {
+        isCancellationRequested: false,
+        onCancellationRequested: jest.fn(),
+      };
+
+      // Execute the task and return the promise
+      return task(mockProgress, mockToken);
+    });
+
+    // Now test pullOllamaModel
+    try {
+      await modelManager.pullOllamaModel('llama3');
+      // If we get here, the test should fail
+      expect('This should not be reached').toBe('The function should have thrown');
+    } catch (error) {
+      expect(error.message).toContain('Ollama API endpoint not found');
+    }
+
+    // Test removeOllamaModel
+    try {
+      await modelManager.removeOllamaModel('llama3');
+      // If we get here, the test should fail
+      expect('This should not be reached').toBe('The function should have thrown');
+    } catch (error) {
+      expect(error.message).toContain('Ollama API endpoint not found');
+    }
   });
 });

@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 import { MCPClient } from './mcp/mcpClient';
 // import { EnhancedMCPClient } from './mcp/enhancedMcpClient';
 import { initializeTestGenerationCommands } from './commands/testGenerationCommands';
+import { LLMProvider } from './mcp/llmClient';
 import { MCPBridgeManager } from './mcp/mcpBridgeManager';
+import { ModelPresetTool } from './mcp/tools/modelPresetTool';
 import { EnhancedNeo4jMemoryClient } from './memory/enhancedNeo4jMemoryClient';
 import { Neo4jMemoryClient } from './memory/neo4jMemoryClient';
 import { CoverageVisualizationProvider } from './ui/coverageVisualizationProvider';
@@ -14,6 +16,7 @@ import { ModelManagerViewProvider } from './ui/modelManagerView';
 import { OllamaConfigViewProvider } from './ui/ollamaConfigView';
 import { ModelManager } from './utils/modelManager';
 import networkConfig, { Environment, ServiceType } from './utils/networkConfig';
+import { PresetManager } from './utils/presetManager';
 
 // Global variables
 let mcpClient: MCPClient | undefined;
@@ -39,7 +42,7 @@ let _coverageVisualizationProvider: CoverageVisualizationProvider | undefined;
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 // This method is called when your extension is activated
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
   console.info('Activating Adamize extension');
 
   // Register commands
@@ -246,6 +249,49 @@ export function activate(context: vscode.ExtensionContext) {
       outputChannel
     );
 
+    // Initialize Preset Manager
+    const presetManager = new PresetManager(context, outputChannel);
+    presetManager
+      .initialize()
+      .then(() => {
+        // Create Model Preset Tool
+        const modelPresetTool = new ModelPresetTool(presetManager, outputChannel);
+
+        // Register Model Preset Tool with MCP Bridge Manager
+        if (mcpBridgeManager) {
+          // Create a default bridge if none exists
+          const bridges = mcpBridgeManager.getAllBridges();
+          let bridgeId: string;
+
+          if (bridges.length === 0) {
+            // Create a default bridge
+            const ollamaConfig = vscode.workspace.getConfiguration('adamize.ollama');
+            bridgeId = mcpBridgeManager.createBridge({
+              llmProvider: LLMProvider.Ollama,
+              llmModel: (ollamaConfig.get('model') as string) || 'qwen3-coder',
+              llmEndpoint:
+                (ollamaConfig.get('endpoint') as string) ||
+                'http://localhost:11434/v1/chat/completions',
+              systemPrompt: ollamaConfig.get('systemPrompt') as string,
+              temperature: ollamaConfig.get('temperature') as number,
+              maxTokens: ollamaConfig.get('maxTokens') as number,
+            });
+          } else {
+            // Use the first bridge
+            bridgeId = bridges[0].id;
+          }
+
+          // Register the tool with the bridge
+          mcpBridgeManager.registerTool(bridgeId, modelPresetTool);
+          outputChannel.appendLine(
+            `[Adamize] Registered Model Preset Tool with bridge ${bridgeId}`
+          );
+        }
+      })
+      .catch(error => {
+        outputChannel.appendLine(`[Adamize] Error initializing Preset Manager: ${error}`);
+      });
+
     // Register Model Manager View
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
@@ -346,7 +392,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Ollama is already running');
         return;
       }
-    } catch (error) {
+    } catch {
       // Ollama is not running, start it
       const terminal = vscode.window.createTerminal('Ollama');
       terminal.sendText('ollama serve');
@@ -381,7 +427,7 @@ export function activate(context: vscode.ExtensionContext) {
       // Create a bridge for Ollama
       const ollamaConfig = vscode.workspace.getConfiguration('adamize.ollama');
       const bridgeId = mcpBridgeManager?.createBridge({
-        llmProvider: 'ollama' as any,
+        llmProvider: LLMProvider.Ollama,
         llmModel: (ollamaConfig.get('model') as string) || 'qwen3-coder',
         llmEndpoint:
           (ollamaConfig.get('endpoint') as string) || 'http://localhost:11434/v1/chat/completions',
@@ -427,7 +473,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {
+export function deactivate(): void {
   console.info('Deactivating Adamize extension');
 
   // Dispose MCP Bridge Manager
@@ -449,7 +495,7 @@ export function deactivate() {
  * Show welcome message on first activation
  * @param context Extension context
  */
-export function showWelcomeMessage(context: vscode.ExtensionContext) {
+export function showWelcomeMessage(context: vscode.ExtensionContext): void {
   const hasShownWelcome = context.globalState.get('adamize.hasShownWelcome');
   if (!hasShownWelcome) {
     vscode.window.showInformationMessage(
