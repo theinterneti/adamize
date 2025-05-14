@@ -17,8 +17,24 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { MCPBridgeManager } from '../mcp/mcpBridgeManager';
-import { MCPToolCall } from '../mcp/mcpTypes';
+import { BridgeManagerEventType, BridgeStatus, MCPBridgeManager } from '../mcp/mcpBridgeManager';
+import { MCPTool, MCPToolCall } from '../mcp/mcpTypes';
+
+/**
+ * Tool category
+ */
+interface ToolCategory {
+  name: string;
+  tools: MCPTool[];
+}
+
+/**
+ * Tool parameter validation result
+ */
+interface ParameterValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+}
 
 /**
  * Message interface for chat messages
@@ -41,6 +57,11 @@ interface WebviewMessage {
   messageId?: string;
   content?: string;
   done?: boolean;
+  toolName?: string;
+  functionName?: string;
+  parameters?: Record<string, any>;
+  toolCall?: MCPToolCall;
+  toolResult?: any;
 }
 
 /**
@@ -51,6 +72,7 @@ export class MCPChatViewProvider {
   private extensionUri: vscode.Uri;
   private conversationHistory: Map<string, ChatMessage[]> = new Map();
   private activeBridgeId: string | undefined;
+  private toolCategories: Map<string, ToolCategory[]> = new Map();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -61,6 +83,9 @@ export class MCPChatViewProvider {
 
     // Register commands
     this.registerCommands();
+
+    // Listen for bridge events
+    this.registerBridgeEventListeners();
   }
 
   /**
@@ -71,6 +96,305 @@ export class MCPChatViewProvider {
     this.context.subscriptions.push(
       vscode.commands.registerCommand('adamize.openMCPChat', () => this.createOrShowPanel())
     );
+  }
+
+  /**
+   * Register bridge event listeners
+   */
+  private registerBridgeEventListeners(): void {
+    // Listen for bridge created events
+    this.mcpBridgeManager.addEventListenerManager(BridgeManagerEventType.BridgeCreated, () =>
+      this.updateServerList()
+    );
+
+    // Listen for bridge removed events
+    this.mcpBridgeManager.addEventListenerManager(BridgeManagerEventType.BridgeRemoved, () =>
+      this.updateServerList()
+    );
+
+    // Listen for bridge started events
+    this.mcpBridgeManager.addEventListenerManager(BridgeManagerEventType.BridgeStarted, () =>
+      this.updateServerList()
+    );
+
+    // Listen for bridge stopped events
+    this.mcpBridgeManager.addEventListenerManager(BridgeManagerEventType.BridgeStopped, () =>
+      this.updateServerList()
+    );
+
+    // Listen for bridge error events
+    this.mcpBridgeManager.addEventListenerManager(BridgeManagerEventType.BridgeError, event => {
+      if (this.panel) {
+        this.panel.webview.postMessage({
+          command: 'bridgeError',
+          bridgeId: event.bridgeId,
+          error: event.data?.error?.message || 'Unknown error',
+        });
+      }
+    });
+
+    // Listen for tools discovered events
+    this.mcpBridgeManager.addEventListenerManager(
+      BridgeManagerEventType.BridgeToolsDiscovered,
+      event => {
+        this.updateToolCategories(event.bridgeId);
+      }
+    );
+  }
+
+  /**
+   * Update tool categories for a bridge
+   * @param bridgeId Bridge ID
+   */
+  private updateToolCategories(bridgeId: string): void {
+    const bridge = this.mcpBridgeManager.getBridge(bridgeId);
+    if (!bridge) {
+      return;
+    }
+
+    const tools = bridge.getAllTools();
+    const categories: ToolCategory[] = [];
+    const categorizedTools = new Map<string, MCPTool[]>();
+
+    // Categorize tools
+    for (const tool of tools) {
+      const category = tool.category || 'Uncategorized';
+      if (!categorizedTools.has(category)) {
+        categorizedTools.set(category, []);
+      }
+      categorizedTools.get(category)!.push(tool);
+    }
+
+    // Sort categories alphabetically
+    const sortedCategories = Array.from(categorizedTools.keys()).sort();
+
+    // Create category objects
+    for (const category of sortedCategories) {
+      categories.push({
+        name: category,
+        tools: categorizedTools.get(category)!.sort((a, b) => a.name.localeCompare(b.name)),
+      });
+    }
+
+    // Store categories
+    this.toolCategories.set(bridgeId, categories);
+
+    // Update UI if panel exists
+    if (this.panel) {
+      this.panel.webview.postMessage({
+        command: 'updateToolCategories',
+        bridgeId,
+        categories,
+      });
+    }
+  }
+
+  /**
+   * Handle tool selection
+   * @param toolName Tool name
+   * @param bridgeId Bridge ID
+   */
+  private async handleToolSelection(toolName: string, bridgeId: string): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    const bridge = this.mcpBridgeManager.getBridge(bridgeId);
+    if (!bridge) {
+      return;
+    }
+
+    const tools = bridge.getAllTools();
+    const tool = tools.find(t => t.name === toolName);
+
+    if (!tool) {
+      return;
+    }
+
+    // Send tool details to webview
+    this.panel.webview.postMessage({
+      command: 'showToolDetails',
+      tool,
+    });
+  }
+
+  /**
+   * Execute a tool
+   * @param toolName Tool name
+   * @param functionName Function name
+   * @param parameters Function parameters
+   * @param bridgeId Bridge ID
+   */
+  private async executeTool(
+    toolName: string,
+    functionName: string,
+    parameters: Record<string, any>,
+    bridgeId: string
+  ): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    const bridge = this.mcpBridgeManager.getBridge(bridgeId);
+    if (!bridge) {
+      return;
+    }
+
+    try {
+      // Validate parameters
+      const validationResult = this.validateParameters(toolName, functionName, parameters, bridge);
+
+      if (!validationResult.isValid) {
+        // Send validation errors to webview
+        this.panel.webview.postMessage({
+          command: 'toolValidationErrors',
+          toolName,
+          functionName,
+          errors: validationResult.errors,
+        });
+        return;
+      }
+
+      // Show loading indicator
+      this.panel.webview.postMessage({
+        command: 'setToolExecutionStatus',
+        toolName,
+        functionName,
+        status: 'executing',
+      });
+
+      // Execute tool
+      const result = await bridge.callTool(toolName, functionName, parameters);
+
+      // Create tool call object
+      const toolCall: MCPToolCall = {
+        name: toolName,
+        parameters,
+        result,
+      };
+
+      // Send result to webview
+      this.panel.webview.postMessage({
+        command: 'toolExecutionResult',
+        toolName,
+        functionName,
+        result,
+        toolCall,
+      });
+
+      // Add to conversation as a system message
+      const systemMessage: ChatMessage = {
+        role: 'system',
+        content: `Executed tool ${toolName}.${functionName}`,
+        toolCalls: [toolCall],
+      };
+
+      this.addMessageToHistory(bridgeId, systemMessage);
+
+      // Add message to chat
+      this.panel.webview.postMessage({
+        command: 'addMessage',
+        message: systemMessage,
+      });
+    } catch (error) {
+      // Send error to webview
+      this.panel.webview.postMessage({
+        command: 'toolExecutionError',
+        toolName,
+        functionName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Validate parameters for a tool function
+   * @param toolName Tool name
+   * @param functionName Function name
+   * @param parameters Parameters to validate
+   * @param bridge Bridge instance
+   * @returns Validation result
+   */
+  private validateParameters(
+    toolName: string,
+    functionName: string,
+    parameters: Record<string, any>,
+    bridge: any
+  ): ParameterValidationResult {
+    const result: ParameterValidationResult = {
+      isValid: true,
+      errors: {},
+    };
+
+    const tools = bridge.getAllTools();
+    const tool = tools.find(t => t.name === toolName);
+
+    if (!tool || !tool.functions) {
+      result.isValid = false;
+      result.errors._general = 'Tool not found';
+      return result;
+    }
+
+    const func = tool.functions.find(f => f.name === functionName);
+
+    if (!func || !func.parameters) {
+      result.isValid = false;
+      result.errors._general = 'Function not found';
+      return result;
+    }
+
+    // Check required parameters
+    const requiredParams = func.parameters.required || [];
+    for (const param of requiredParams) {
+      if (
+        parameters[param] === undefined ||
+        parameters[param] === null ||
+        parameters[param] === ''
+      ) {
+        result.isValid = false;
+        result.errors[param] = 'This parameter is required';
+      }
+    }
+
+    // Check parameter types
+    if (func.parameters.properties) {
+      for (const [paramName, paramSchema] of Object.entries(func.parameters.properties)) {
+        if (parameters[paramName] !== undefined) {
+          // Check type
+          if (paramSchema.type === 'number' || paramSchema.type === 'integer') {
+            if (typeof parameters[paramName] !== 'number') {
+              result.isValid = false;
+              result.errors[paramName] = `Expected a ${paramSchema.type}`;
+            } else if (paramSchema.type === 'integer' && !Number.isInteger(parameters[paramName])) {
+              result.isValid = false;
+              result.errors[paramName] = 'Expected an integer';
+            }
+          } else if (paramSchema.type === 'boolean') {
+            if (typeof parameters[paramName] !== 'boolean') {
+              result.isValid = false;
+              result.errors[paramName] = 'Expected a boolean';
+            }
+          } else if (paramSchema.type === 'string') {
+            if (typeof parameters[paramName] !== 'string') {
+              result.isValid = false;
+              result.errors[paramName] = 'Expected a string';
+            }
+          } else if (paramSchema.type === 'array') {
+            if (!Array.isArray(parameters[paramName])) {
+              result.isValid = false;
+              result.errors[paramName] = 'Expected an array';
+            }
+          } else if (paramSchema.type === 'object') {
+            if (typeof parameters[paramName] !== 'object' || parameters[paramName] === null) {
+              result.isValid = false;
+              result.errors[paramName] = 'Expected an object';
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -112,11 +436,16 @@ export class MCPChatViewProvider {
     // Initialize the active bridge ID
     const bridges = this.mcpBridgeManager.getAllBridges();
     if (bridges.length > 0) {
-      const runningBridge = bridges.find(bridge => bridge.status === 'running');
+      const runningBridge = bridges.find(bridge => bridge.status === BridgeStatus.Running);
       this.activeBridgeId = runningBridge ? runningBridge.id : bridges[0].id;
 
       // Send the server list to the webview
       this.updateServerList();
+
+      // Update tool categories for the active bridge
+      if (this.activeBridgeId) {
+        this.updateToolCategories(this.activeBridgeId);
+      }
     }
 
     return this.panel;
@@ -147,6 +476,24 @@ export class MCPChatViewProvider {
         if (message.bridgeId) {
           this.activeBridgeId = message.bridgeId;
           this.updateServerList();
+          this.updateToolCategories(message.bridgeId);
+        }
+        break;
+
+      case 'selectTool':
+        if (message.toolName && message.bridgeId) {
+          await this.handleToolSelection(message.toolName, message.bridgeId);
+        }
+        break;
+
+      case 'executeTool':
+        if (message.toolName && message.functionName && message.bridgeId) {
+          await this.executeTool(
+            message.toolName,
+            message.functionName,
+            message.parameters || {},
+            message.bridgeId
+          );
         }
         break;
     }
@@ -375,6 +722,97 @@ export class MCPChatViewProvider {
   }
 
   /**
+   * Execute a tool call
+   * @param bridge MCP bridge
+   * @param toolCall Tool call to execute
+   */
+  private async executeToolCall(bridge: any, toolCall: MCPToolCall): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    try {
+      // Find the function name
+      const tools = bridge.getAllTools();
+      const tool = tools.find(t => t.name === toolCall.name);
+
+      if (!tool || !tool.functions) {
+        throw new Error(`Tool ${toolCall.name} not found`);
+      }
+
+      // Find the function to execute
+      const functionName = this.findFunctionName(tool, toolCall.parameters);
+
+      if (!functionName) {
+        throw new Error(
+          `No matching function found for parameters: ${JSON.stringify(toolCall.parameters)}`
+        );
+      }
+
+      // Execute the tool
+      const result = await bridge.callTool(toolCall.name, functionName, toolCall.parameters);
+
+      // Update the tool call with the result
+      toolCall.result = result;
+
+      // Send the updated tool call to the webview
+      this.panel.webview.postMessage({
+        command: 'updateToolCall',
+        toolCall,
+      });
+    } catch (error) {
+      this.outputChannel.appendLine(`Error executing tool call: ${error}`);
+
+      // Update the tool call with the error
+      toolCall.result = `Error: ${error instanceof Error ? error.message : String(error)}`;
+
+      // Send the updated tool call to the webview
+      this.panel.webview.postMessage({
+        command: 'updateToolCall',
+        toolCall,
+        error: true,
+      });
+    }
+  }
+
+  /**
+   * Find the function name based on parameters
+   * @param tool Tool to search
+   * @param parameters Parameters to match
+   * @returns Function name or undefined if not found
+   */
+  private findFunctionName(tool: MCPTool, parameters: Record<string, any>): string | undefined {
+    // If the tool has only one function, use that
+    if (tool.functions && tool.functions.length === 1) {
+      return tool.functions[0].name;
+    }
+
+    // If the tool has multiple functions, try to match by parameters
+    if (tool.functions && tool.functions.length > 0) {
+      // First check if there's a direct match by parameter names
+      for (const func of tool.functions) {
+        if (func.parameters && func.parameters.properties) {
+          const paramNames = Object.keys(func.parameters.properties);
+          const inputParamNames = Object.keys(parameters);
+
+          // Check if all required parameters are present
+          const requiredParams = func.parameters.required || [];
+          const hasAllRequired = requiredParams.every(param => inputParamNames.includes(param));
+
+          if (hasAllRequired) {
+            return func.name;
+          }
+        }
+      }
+
+      // If no match found, return the first function as fallback
+      return tool.functions[0].name;
+    }
+
+    return undefined;
+  }
+
+  /**
    * Parse tool calls from LLM response
    * @param response LLM response text
    * @returns Array of tool calls
@@ -505,6 +943,25 @@ export class MCPChatViewProvider {
             <option value="">Select a server...</option>
           </select>
           <button id="clear-button" class="clear-button">Clear Conversation</button>
+          <button id="tools-button" class="tools-button">Tools</button>
+        </div>
+
+        <div id="tools-panel" class="tools-panel hidden">
+          <div class="tools-header">
+            <h2>Available Tools</h2>
+            <button id="close-tools-button" class="close-button">×</button>
+          </div>
+          <div id="tools-categories" class="tools-categories"></div>
+        </div>
+
+        <div id="tool-details-panel" class="tool-details-panel hidden">
+          <div class="tool-details-header">
+            <h2>Tool Details</h2>
+            <button id="close-tool-details-button" class="close-button">×</button>
+          </div>
+          <div id="tool-details-content" class="tool-details-content"></div>
+          <div id="tool-execution-form" class="tool-execution-form"></div>
+          <div id="tool-execution-result" class="tool-execution-result hidden"></div>
         </div>
 
         <div id="chat-container" class="chat-container"></div>
@@ -521,7 +978,8 @@ export class MCPChatViewProvider {
   }
 
   /**
-   * Generate a nonce for the webview
+   * Generate a nonce
+   * @returns Random nonce
    */
   private getNonce(): string {
     let text = '';
@@ -534,6 +992,8 @@ export class MCPChatViewProvider {
 
   /**
    * Get the conversation history for a bridge
+   * @param bridgeId Bridge ID
+   * @returns Conversation history
    */
   public getConversationHistory(bridgeId: string): ChatMessage[] {
     return this.conversationHistory.get(bridgeId) || [];
@@ -541,47 +1001,9 @@ export class MCPChatViewProvider {
 
   /**
    * Get the active bridge ID
+   * @returns Active bridge ID
    */
   public getActiveBridgeId(): string | undefined {
     return this.activeBridgeId;
-  }
-
-  /**
-   * Execute a tool call
-   * @param bridge MCP bridge
-   * @param toolCall Tool call to execute
-   */
-  private async executeToolCall(bridge: any, toolCall: MCPToolCall): Promise<void> {
-    try {
-      // Parse the tool name and function name
-      const [toolName, functionName] = toolCall.name.split('.');
-
-      if (!toolName || !functionName) {
-        this.outputChannel.appendLine(`Invalid tool call format: ${toolCall.name}`);
-        return;
-      }
-
-      // Execute the tool call
-      const result = await bridge.callTool(toolName, functionName, toolCall.parameters);
-
-      this.outputChannel.appendLine(`Tool call result: ${JSON.stringify(result)}`);
-
-      // Send tool result to webview
-      this.panel?.webview.postMessage({
-        command: 'addToolResult',
-        toolName: toolName,
-        functionName: functionName,
-        result: result,
-      });
-    } catch (error) {
-      this.outputChannel.appendLine(`Error executing tool call: ${error}`);
-
-      // Send error to webview
-      this.panel?.webview.postMessage({
-        command: 'addToolError',
-        toolCall: toolCall,
-        error: String(error),
-      });
-    }
   }
 }
